@@ -12,7 +12,7 @@ import traceback
 import random
 import webbrowser
 import configparser
-from libs import utils
+from libs import my_utils
 from urllib.parse import quote
 from itchat.content import *
 from threading import Thread
@@ -22,7 +22,7 @@ from bottle import template
 from libs.movie import SharMovie
 from libs.tuling import tuling
 
-logger = utils.init_logger()
+logger = my_utils.init_logger()
 
 movie = SharMovie()
 

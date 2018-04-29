@@ -6,7 +6,7 @@ import time
 import json
 import requests
 import random
-from libs import utils
+from libs import my_utils
 import configparser
 from urllib.parse import quote
 from itchat.content import *
@@ -16,13 +16,12 @@ from libs.mysql import ConnectMysql
 from bs4 import BeautifulSoup
 from libs.groupMessage import FormData
 from libs.movie import SharMovie
-from libs import utils
 from libs.tuling import tuling
 from libs.wx_bot import *
 from libs.orther import Orther
 
 
-logger = utils.init_logger()
+logger = my_utils.init_logger()
 al = Alimama(logger)
 mjd = MediaJd()
 tu = tuling()

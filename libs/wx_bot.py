@@ -11,9 +11,9 @@ import threading
 import traceback
 import random
 import webbrowser
-from libs import utils
+from libs import my_utils
 from urllib.parse import quote
-from itchat.content import *
+from libs import wxpyLogin
 import configparser
 from threading import Thread
 from libs.mediaJd import MediaJd
@@ -27,7 +27,8 @@ from libs.tuling import tuling
 from libs.orther import Orther
 from libs.textMessage import TextMessage
 
-logger = utils.init_logger()
+global bot
+logger = my_utils.init_logger()
 
 mjd = MediaJd()
 al = Alimama(logger)
@@ -96,10 +97,21 @@ def check_if_is_group(msg):
 class WxBot(object):
 
     def __init__(self):
+
         if config.get('SYS', 'gm') == 'yes':
             fm.groupMessages()
         print('run.....')
-        self.run()
+        global bot
+        bot = Bot(cache_path=True, console_qr=1)
+
+    def run(self):
+
+        if config.get('SYS', 'jd') == 'yes':
+            mjd.login() 
+
+        if config.get('SYS', 'tb') == 'yes':
+            al.login()
+        bot = Bot(cache_path=True, console_qr=1)
 
     # 消息回复(文本类型和分享类型消息)
     @itchat.msg_register(['Text', 'Sharing', 'Card'])
@@ -112,12 +124,15 @@ class WxBot(object):
     def text(msg):
         print('Group Message Comming...')
         check_if_is_group(msg)
-
-    @itchat.msg_register(FRIENDS)
-    def add_friend(msg):
-        print('Add Friends ....')
-        itchat.add_friend(**msg['Text'])  # 该操作会自动将新好友的消息录入，不需要重载通讯录
-
+    @bot.msg_register(msg_types = FRIENDS)
+    # def add_friend(msg):
+        # print('Add Friends ....')
+        # itchat.add_friend(**msg['Text'])  # 该操作会自动将新好友的消息录入，不需要重载通讯录
+    def auto_accept_friends(msg):
+        # 接受好友请求
+        print(msg)
+        new_friend = msg.card.accept()
+        print(new_friend)
         soup = BeautifulSoup(msg['Content'], 'lxml')
         msg_soup = soup.find('msg')
         sourc = msg_soup.get('sourceusername')
@@ -146,21 +161,6 @@ class WxBot(object):
                 '''
         itchat.send_msg(text, msg['RecommendInfo']['UserName'])
 
-    def run(self):
-
-        if config.get('SYS', 'jd') == 'yes':
-            mjd.login() 
-
-        if config.get('SYS', 'tb') == 'yes':
-            al.login()
-
-        sysstr = platform.system()
-
-        if (sysstr == "Linux") or (sysstr == "Darwin"):
-            itchat.auto_login(enableCmdQR=2, hotReload=True, statusStorageDir='peng.pkl')
-        else:
-            itchat.auto_login(True, enableCmdQR=True)
-        itchat.run()
 
 if __name__ == '__main__':
     mi = WxBot()
