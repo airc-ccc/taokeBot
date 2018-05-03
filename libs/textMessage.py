@@ -1,30 +1,12 @@
 # -*-coding: UTF-8-*-
 
-import itchat
-import re
 import time
-import json
-import requests
-import random
-from libs import my_utils
+import itchat
 import configparser
 from urllib.parse import quote
-from itchat.content import *
-from libs.mediaJd import MediaJd
-from libs.alimama import Alimama
 from libs.mysql import ConnectMysql
-from bs4 import BeautifulSoup
-from libs.groupMessage import FormData
-from libs.movie import SharMovie
-from libs.tuling import tuling
-from libs.wx_bot import *
 from libs.orther import Orther
 
-
-logger = my_utils.init_logger()
-al = Alimama(logger)
-mjd = MediaJd()
-tu = tuling()
 ort = Orther()
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")

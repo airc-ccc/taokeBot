@@ -2,23 +2,20 @@
 # author Mr.Peng
 
 import requests
-import json
 import time
 import json
 import platform
+import itchat
 import re
 import os
-import itchat
 import configparser
 from selenium import webdriver
 from libs import my_utils
 from bs4 import BeautifulSoup
 from time import strftime,gmtime
 from libs.mysql import ConnectMysql
-from itchat.content import *
 from libs.orther import Orther
 from libs.tuling import tuling
-from bottle import template
 
 logger = my_utils.init_logger()
 
@@ -33,6 +30,7 @@ class MediaJd:
     def __init__(self):
         self.se = requests.session()
         self.load_cookies()
+        self.logger = logger
 
     def getJd(self, msg, good_url):
 
@@ -41,11 +39,10 @@ class MediaJd:
 一一一一系统信息一一一一
 暂不支持京东链接
                     '''
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
 
         cm = ConnectMysql()
-        print('开始查询分享商品的信息......', msg['Text'])
+        self.logger.debug('开始查询分享商品的信息......', msg['Text'])
 
         wei_info = itchat.search_friends(userName=msg['FromUserName'])
         bot_info = itchat.search_friends(userName=msg['ToUserName'])
@@ -54,8 +51,7 @@ class MediaJd:
 
         if sku_arr == None:
             msg_text = tu.tuling(msg)
-            itchat.send(msg_text, msg['FromUserName'])
-            return
+            return msg_text
 
         sku = sku_arr[1].split('.')
         res = self.get_good_link(sku[0])
@@ -75,12 +71,12 @@ class MediaJd:
 例如：
 2018-01-01,12345678901
                 ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
-            itchat.send(text, msg['FromUserName'])
+
             insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time) VALUES('"+ bot_info['NickName'] +"', '" + \
                          res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + wei_info[
                              'NickName'] + "', '" + str(time.time()) + "')"
             cm.ExecNonQuery(insert_sql)
-            return
+            return text
         else:
             text = '''
 一一一一返利信息一一一一
@@ -107,8 +103,7 @@ class MediaJd:
                          wei_info['NickName'] + "', '" + str(time.time()) + "')"
             cm.ExecNonQuery(insert_sql)
 
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
 
     def getGroupJd(self, msg, good_url):
         if config.get('SYS', 'jd') == 'no':
@@ -116,16 +111,14 @@ class MediaJd:
 一一一一系统信息一一一一
 暂不支持京东链接
                     '''
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
         cm = ConnectMysql()
         wei_info = itchat.search_chatrooms(userName=msg['FromUserName'])
         bot_info = itchat.search_friends(userName=msg['ToUserName'])
         sku_arr = good_url.split('https://item.m.jd.com/product/')
         if sku_arr == None:
             msg_text = tu.tuling(msg)
-            itchat.send(msg_text, msg['FromUserName'])
-            return
+            return msg_text
 
         sku = sku_arr[1].split('.')
         res = self.get_good_link(sku[0])
@@ -138,13 +131,12 @@ class MediaJd:
 【京东价】%s元
  返利链接:%s
                 ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
-            itchat.send(text, msg['FromUserName'])
 
             insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time) VALUES('"+ bot_info['NickName'] +"', '" + \
                          res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + wei_info[
                              'NickName'] + "', '" + str(time.time()) + "')"
             cm.ExecNonQuery(insert_sql)
-            return
+            return text
         else:
             text = '''
 一一一一返利信息一一一一
@@ -164,8 +156,7 @@ class MediaJd:
                          wei_info['NickName'] + "', '" + str(time.time()) + "')"
             cm.ExecNonQuery(insert_sql)
 
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
 
     def check_login(self):
 
@@ -217,7 +208,7 @@ class MediaJd:
     def login(self):
         clr = self.check_login()
         if 'Login Success' in clr:
-            print('京东已登录！不需要再次登录！')
+            self.logger.debug('京东已登录！不需要再次登录！')
             return 'Login Success'
         else:
             self.do_login()
@@ -327,11 +318,10 @@ class MediaJd:
         self.load_cookies()
         page = 1
         sku_num = 0
-        print('aaa')
         while sku_num < 20:
             url = "https://media.jd.com/gotoadv/goods?searchId=2011005331%23%23%23st3%23%23%23kt0%23%23%2378dc30b6-fa14-4c67-900c-235b129ab4bb&pageIndex="+str(page)+"&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=1&fromPrice=&toPrice=&dataFlag=0&keyword=&input_keyword=&hasCoupon=1&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC&price=PC"
             page += 1
-            print(page)
+            self.logger.debug(page)
             res = self.se.get(url)
             soup = BeautifulSoup(res.text, 'lxml')
             skuList = []

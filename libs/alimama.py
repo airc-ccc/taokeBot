@@ -1,17 +1,14 @@
 # encoding: utf-8
 
+import re
 import json
 import os.path
+import configparser
 import platform
-import re
 import sys
 import time
 import traceback
-import itchat
-import requests
-import random
 import datetime
-import configparser
 
 if sys.version_info[0] < 3:
     import urllib
@@ -22,9 +19,6 @@ from io import BytesIO
 from threading import Thread
 from dateutil.relativedelta import relativedelta
 from libs.mysql import ConnectMysql
-from libs.wx_bot import *
-from itchat.content import *
-from libs.mediaJd import MediaJd
 from libs.orther import Orther
 from selenium import webdriver
 
@@ -33,11 +27,7 @@ import requests
 
 from PIL import Image
 
-sysstr = platform.system()
-if (sysstr == "Linux") or (sysstr == "Darwin"):
-    pass
 cookie_fname = 'cookies_taobao.txt'
-
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
 
@@ -58,8 +48,7 @@ class Alimama:
 一一一一系统信息一一一一
 暂不支持商品查询
                     '''
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
         try:
             q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
             if u'打开👉天猫APP👈' in msg['Text']:
@@ -106,8 +95,7 @@ class Alimama:
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                                 '''
-                itchat.send(text, msg['FromUserName'])
-                return
+                return text
 
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
@@ -116,10 +104,6 @@ class Alimama:
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
-            # if res1 == None:
-            #     img = self.get_qr_image()
-            #     itchat.send(img, msg['FromUserName'])
-            #     return
             tao_token = res1['taoToken']
             coupon_link = res1['couponLink']
             if coupon_link != "":
@@ -156,8 +140,7 @@ class Alimama:
 例如：
 2018-01-01,12345678901
                                         ''' % (q, price, fx2, tao_token)
-
-            itchat.send(res_text, msg['FromUserName'])
+            return res_text
         except Exception as e:
             trace = traceback.format_exc()
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
@@ -182,7 +165,7 @@ class Alimama:
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                     '''
-            itchat.send(info, msg['FromUserName'])
+            return info
 
     def getGroupTao(self, msg):
         if config.get('SYS', 'tb') == 'no':
@@ -190,8 +173,7 @@ class Alimama:
 一一一一系统信息一一一一
 暂不支持商品查询
                     '''
-            itchat.send(text, msg['FromUserName'])
-            return
+            return text
         try:
             q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
             if u'打开👉天猫APP👈' in msg['Text']:
@@ -232,8 +214,7 @@ class Alimama:
 免费看电影方法：
 '''+config.get('URL', 'movie')+'''
                                 '''
-                itchat.send(text, msg['FromUserName'])
-                return
+                return text
 
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
@@ -242,10 +223,6 @@ class Alimama:
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
-            if res1 == None:
-                img = self.get_qr_image()
-                itchat.send(img, msg['FromUserName'])
-                return
             tao_token = res1['taoToken']
             coupon_link = res1['couponLink']
             if coupon_link != "":
@@ -271,8 +248,7 @@ class Alimama:
 【淘口令】%s
  复制本条消息
                                         ''' % (q, price, tao_token)
-
-            itchat.send(res_text, msg['FromUserName'])
+            return res_text
         except Exception as e:
             trace = traceback.format_exc()
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
@@ -291,8 +267,7 @@ class Alimama:
 免费看电影方法：
 '''+config.get('URL', 'movie')+'''
                     '''
-            itchat.send(info, msg['FromUserName'])
-
+            return res_text
     # 启动一个线程，定时访问淘宝联盟主页，防止cookie失效
     def start_keep_cookie_thread(self):
         t = Thread(target=self.visit_main_url, args=())
@@ -316,7 +291,7 @@ class Alimama:
         while True:
             time.sleep(60 * 5)
             try:
-                # self.logger.debug("visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                self.logger.debug("visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 self.get_url(url, headers)
                 # self.logger.debug(self.check_login())
                 real_url = "https://detail.tmall.com/item.htm?id=42485910384"

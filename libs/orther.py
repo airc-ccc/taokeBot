@@ -2,25 +2,11 @@
 
 from __future__ import unicode_literals
 import itchat
-import re
 import time
-import json
-import platform
-import requests
-import threading
-import traceback
-import random
-import webbrowser
 import configparser
 from libs import my_utils
-from urllib.parse import quote
-from itchat.content import *
-from threading import Thread
 from libs.mysql import ConnectMysql
-from bs4 import BeautifulSoup
-from bottle import template
 from libs.movie import SharMovie
-from libs.tuling import tuling
 
 logger = my_utils.init_logger()
 
@@ -30,11 +16,7 @@ config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
 
 class Orther(object):
-
-
-
-        # 创建用户账户
-
+    # 创建用户账户
     def create_user_info(self, msg, lnivt_code=0, tool=False, wxid=0, sourcname=0):
         cm = ConnectMysql()
 

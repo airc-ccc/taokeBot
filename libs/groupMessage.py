@@ -1,17 +1,15 @@
 # -*-coding: UTF-8-*-
 import time
+import itchat
 import webbrowser
+import datetime
+from bottle import template
+from libs.mediaJd import MediaJd
 from flask import Flask
 from flask import request
 import configparser
 from libs.mysql import ConnectMysql
-from libs import wx_bot
 from threading import Thread
-from bottle import template
-from libs.wx_bot import *
-from libs.mediaJd import MediaJd
-from itchat.content import *
-import datetime
 
 app = Flask(__name__)
 mjd = MediaJd()
