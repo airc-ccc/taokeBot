@@ -29,7 +29,7 @@ class FormData(object):
 
 	# 获取群
 	@async
-	def groupMessages(self):
+	def groupMessages(self, bot):
 		time.sleep(30)
 		yorn = input("是否重新选群？y/n:")
 		if yorn == 'n':
@@ -39,12 +39,10 @@ class FormData(object):
 		print('start.....')
 		cm = ConnectMysql()
 
-		res = itchat.web_init()
-
-		select_sql = "DELETE FROM taojin_group_message WHERE username='" + str(res['User']['NickName']) + "';"
+		select_sql = "DELETE FROM taojin_group_message WHERE bot_puid='" + bot.self.puid + "';"
 		cm.ExecNonQuery(select_sql)
 
-		group = itchat.get_chatrooms(update=True, contactOnly=False)
+		group = bot.groups()
 
 		template_demo = """
 	    <!DOCTPE html>
@@ -56,9 +54,10 @@ class FormData(object):
 	        <body>
 	            <div>
 	                <form action='/formdata'  method='post'>
-	                    <input type="hidden" name="username" value="{{ res['User']['NickName'] }}" />
+	                    <input type="hidden" name="username" value="{{ res }}" />
+	                    <input type="hidden" name="bot_puid" value="{{ bot_puid }}" />
 	                    % for item in items:
-	                    <input type="checkbox" name="{{ item['UserName'] }}" value="{{ item['NickName'] }}" />{{ item['NickName'] }}
+	                    <input type="checkbox" name="{{ item.user_name'] }}" value="{{ item.nick_name'] }}" />{{ item.nick_name'] }}
 	                    %end
 	                    <input type='submit' value='提交' />
 	                </form>
@@ -67,7 +66,7 @@ class FormData(object):
 	    </html>
 	    """
 
-		html = template(template_demo, items=group, res=res)
+		html = template(template_demo, items=group, res=bot.self.nick_name, bot_puid=bot.self.puid)
 
 		with open('form.html', 'w', encoding='utf-8') as f:
 			f.write(html)
@@ -75,12 +74,10 @@ class FormData(object):
 		self.run()
 
 	# 群发消息
-	def send_group_meg(self):
+	def send_group_meg(self, bot):
 		cm = ConnectMysql()
 
-		res = itchat.web_init()
-
-		select_sql = "SELECT * FROM taojin_group_message WHERE username='" + str(res['User']['NickName']) + "';"
+		select_sql = "SELECT * FROM taojin_group_message WHERE bot_puid='" + bot.self.puid + "';"
 
 		group_info = cm.ExecQuery(select_sql)
 
@@ -95,11 +92,11 @@ class FormData(object):
 			print('ok')
 			time.sleep(300)
 
-			data_sql = "SELECT * FROM taojin_good_info WHERE status=1 AND wx_bot='"+ res['User']['NickName'] +"' LIMIT 1"
+			data_sql = "SELECT * FROM taojin_good_info WHERE status=1 AND bot_puid='"+ bot.self.puid +"' LIMIT 1"
 
 			data1 = cm.ExecQuery(data_sql)
 			if data1 == ():
-				mjd.get_good_info(res['User']['NickName'])
+				mjd.get_good_info(bot)
 				cm.Close()
 			cm2 = ConnectMysql()
 			data = cm2.ExecQuery(data_sql)
@@ -115,7 +112,7 @@ class FormData(object):
 请点击链接领取优惠券，下单购买！
 	                ''' % (data[0][3], data[0][5], data[0][7], data[0][8], data[0][10])
 
-			delete_sql = "UPDATE taojin_good_info SET status='2' WHERE id='" + str(data[0][0]) + "'  AND wx_bot='"+ res['User']['NickName'] +"'"
+			delete_sql = "UPDATE taojin_good_info SET status='2' WHERE id='" + str(data[0][0]) + "'  AND bot_puid='"+ bot.self.puid +"'"
 			cm.ExecNonQuery(delete_sql)
 
 			img_name = data[0][3].split('/')
@@ -152,9 +149,10 @@ def setData():
 	# 需要从request对象读取表单内容：
 	formdata = request.form
 	username = formdata['username']
+	bot_puid = formdata['bot_puid']
 	for item in formdata:
 		if item != 'username':
-			insert_sql = "INSERT INTO taojin_group_message(username, groupid, groupname, create_time) VALUES('"+username+"', '"+item+"', '"+formdata[item]+"', '"+str(time.time())+"')"
+			insert_sql = "INSERT INTO taojin_group_message(username, groupid, groupname, create_time, bot_puid) VALUES('"+username+"', '"+item+"', '"+formdata[item]+"', '"+str(time.time())+"', '"+ bot_puid +"')"
 			cm.ExecNonQuery(insert_sql)
 	# 执行群发任务
 	fmm.start_send_msg_thread()

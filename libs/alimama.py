@@ -35,20 +35,23 @@ ort = Orther()
 
 class Alimama:
     def __init__(self, logger):
-        self.se = requests.session()
-        self.load_cookies()
-        self.myip = "127.0.0.1"
-        self.start_keep_cookie_thread()
-        self.logger = logger
+        if config.get('SYS', 'tb') == 'yes':
+            self.se = requests.session()
+            self.load_cookies()
+            self.myip = "127.0.0.1"
+            self.start_keep_cookie_thread()
+            self.logger = logger
 
 
-    def getTao(self, msg):
+    def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
+            self.logger.debug(config.get('SYS', 'tb'))
             text = '''
 一一一一系统信息一一一一
-暂不支持商品查询
+暂不支持淘宝商品查询
                     '''
             return text
+
         try:
             q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
             if u'打开👉天猫APP👈' in msg['Text']:
@@ -72,7 +75,7 @@ class Alimama:
 
             real_url = self.get_real_url(url)
 
-            res = self.get_detail(real_url, msg)
+            res = self.get_detail(bot, real_url, raw)
             if res == 'no match item':
                 text = '''
 一一一一 返利信息 一一一一
@@ -167,7 +170,7 @@ class Alimama:
                     '''
             return info
 
-    def getGroupTao(self, msg):
+    def getGroupTao(self, raw, bot, msg):
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
@@ -197,7 +200,7 @@ class Alimama:
 
             real_url = self.get_real_url(url)
 
-            res = self.get_group_detail(real_url, msg)
+            res = self.get_group_detail(bot, real_url, raw)
             if res == 'no match item':
                 text = '''
 一一一一 返利信息 一一一一
@@ -463,7 +466,7 @@ class Alimama:
             qr_url = codes[0]
             # 使用pyqrcode在终端打印，只在linux下可以用
             pyqrcode_url = pyqrcode.create(qr_url)
-            print (pyqrcode_url.terminal())
+            self.logger.debug(pyqrcode_url.terminal())
 
         self.logger.debug(u"请使用淘宝客户端扫码")
         return lg_token
@@ -551,16 +554,7 @@ class Alimama:
         # loginname = input('请输入淘宝联盟账号:')
         # nloginpwd = input('请输入淘宝联盟密码:')
 
-        if (sysstr == "Linux") or (sysstr == "Darwin"):
-            firefoxOptions = webdriver.FirefoxOptions()
-
-            firefoxOptions.set_headless()
-
-            # 开启driver
-            wd = webdriver.Firefox(firefox_options=firefoxOptions)
-        else:
-            wd = webdriver.Firefox()
-
+        wd = webdriver.Firefox()
         wd.get('http://pub.alimama.com')
 
         time.sleep(10)
@@ -596,7 +590,6 @@ class Alimama:
                 cookies_arr.append([item['name'], item['value']])
             
             f.write(json.dumps(cookies_arr))
-        # wd.close()
         return 'login success'
 
 
@@ -617,12 +610,18 @@ class Alimama:
             return 'test'
 
     # 获取商品详情
-    def get_detail(self, q, msg):
+    def get_detail(self, bot, q, raw):
         cm = ConnectMysql()
+         # 用户第一次查询，修改备注
+        query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
-        userInfo = itchat.search_friends(userName=msg['FromUserName'])
-        bot_info = itchat.search_friends(userName=msg['ToUserName'])
+        if query_good == ():
+            new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'B')
+            self.logger.debug(new_remark_name)
+            bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
+            # 修改数据库
+            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
         try:
             t = int(time.time() * 1000)
             tb_token = self.se.cookies.get('_tb_token_', domain="pub.alimama.com")
@@ -642,10 +641,9 @@ class Alimama:
                 'accept-language': 'en-US,en;q=0.5',
             }
             res = self.get_url(url, headers)
-            print(res.text)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time) VALUES('" + bot_info['NickName'] + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + userInfo['NickName'] + "', '" + str(time.time()) + "')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -656,12 +654,9 @@ class Alimama:
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
 
     # 获取商品详情
-    def get_group_detail(self, q, msg):
+    def get_group_detail(self, bot, q, raw):
         cm = ConnectMysql()
-
-        chatrooms = itchat.search_chatrooms(userName=msg['FromUserName'])
-        bot_info = itchat.search_friends(userName=msg['ToUserName'])
-        print(bot_info)
+        chatrooms = bot.core.search_chatroom(userName=raw.raw['FromUserName'])
         try:
             t = int(time.time() * 1000)
             tb_token = self.se.cookies.get('_tb_token_', domain="pub.alimama.com")
@@ -684,7 +679,7 @@ class Alimama:
             print(res.text)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time) VALUES('" + bot_info['NickName'] + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + chatrooms['NickName'] + "', '" + str(time.time()) + "')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -872,17 +867,15 @@ class Alimama:
 
         return r_url
 
-    def get_order(self, msg, times, orderId, userInfo):
+    def get_order(self, bot, msg, times, orderId, userInfo, puid):
 
         timestr = re.sub('-', '', times)
         order_id = int(orderId)
 
         cm = ConnectMysql()
 
-        bot_info = itchat.search_friends(userName=msg['ToUserName'])
-
         # 查询用户是否有上线
-        check_order_sql = "SELECT * FROM taojin_order WHERE order_id='" + str(order_id) + "' AND wx_bot = '" +bot_info['NickName']+ "';"
+        check_order_sql = "SELECT * FROM taojin_order WHERE order_id='" + str(order_id) + "' AND bot_puid = '" +bot.self.puid+ "';"
         check_order_res = cm.ExecQuery(check_order_sql)
 
         # 判断该订单是否已经提现
@@ -922,11 +915,11 @@ class Alimama:
             res = self.get_url(url, headers)
 
             res_dict = json.loads(res.text)
-            print(res_dict, url)
+            self.logger.debug(res_dict, url)
 
             for item in res_dict['data']['paymentList']:
                 if int(order_id) == int(item['taobaoTradeParentId']):
-                    res = self.changeInfo(msg, item, order_id, userInfo, timestr)
+                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid)
                     return res
 
             user_text = '''
@@ -950,15 +943,12 @@ class Alimama:
             return {"info":"feild"}
 
 
-    def changeInfo(self, msg, info, order_id, userInfo, timestr):
-        print('info dddddddd')
+    def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid):
         try:
             cm = ConnectMysql()
 
-            bot_info = itchat.search_friends(userName=msg['ToUserName'])
-
             # 查询用户是否有上线
-            check_user_sql = "SELECT * FROM taojin_user_info WHERE wx_number='" + str(userInfo['NickName']) + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+            check_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';"
             check_user_res = cm.ExecQuery(check_user_sql)
 
             # 判断是否已经有个人账户，没有返回信息
@@ -968,7 +958,7 @@ class Alimama:
             else:
 
                 # 获取商品查询记录
-                get_query_sql = "SELECT * FROM taojin_query_record WHERE good_title='" + info['auctionTitle'] + "'AND username='" + check_user_res[0][2] + "' AND wx_bot='"+ bot_info['NickName'] +"' ORDER BY create_time LIMIT 1;"
+                get_query_sql = "SELECT * FROM taojin_query_record WHERE good_title='" + info['auctionTitle'] + "'AND puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"' ORDER BY create_time LIMIT 1;"
 
                 get_query_info = cm.ExecQuery(get_query_sql)
 
@@ -989,7 +979,7 @@ class Alimama:
                 if check_user_res and check_user_res[0][17] != '0':
 
                     # 获取邀请人信息
-                    get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                    get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';"
 
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
@@ -1022,14 +1012,16 @@ class Alimama:
                     # 邀请人总钱数加上返利金额
                     withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * 0.1, 2)
 
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE wx_number='" + str(userInfo['NickName']) + "' AND wx_bot='"+ bot_info['NickName'] +"';")
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND wx_bot='"+ bot_info['NickName'] +"';")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
 
-                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source) VALUES('"+ bot_info['NickName'] +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2')")
+                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')")
 
                     args = {
-                        'wx_bot': bot_info['NickName'],
-                        'username': check_user_res[0][2],
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username': check_user_res[0][4],
+                        'puid': puid,
                         'rebate_amount': add_balance,
                         'type': 3,
                         'create_time': time.time()
@@ -1038,10 +1030,12 @@ class Alimama:
 
                     # 写入返利日志
                     cm.InsertRebateLog(args)
-
+                    parent_puid = ort.getPuid(bot, get_parent_info[0][4])
                     args2 = {
-                        'wx_bot': bot_info['NickName'],
-                        'username': get_parent_info[0][2],
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username': get_parent_info[0][4],
+                        'puid': parent_puid,
                         'rebate_amount': add_parent_balance,
                         'type': 4,
                         'create_time': time.time()
@@ -1068,9 +1062,8 @@ class Alimama:
 
                     ''' % (order_id, add_balance)
                     cm.Close()
-                    return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success', 'parent': get_parent_info[0][1]}
+                    return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success', 'parent': get_parent_info[0][4]}
                 else:
-                    print('aabbacc')
                     add_balance = round(float(info['feeString']) * 0.3, 2)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
@@ -1088,15 +1081,16 @@ class Alimama:
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
                         withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
                         taobao_rebate_amount) + "', total_rebate_amount='" + str(
-                        total_rebate_amount) + "', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='" + str(time.time()) + "' WHERE wx_number='" + str(
-                        userInfo['NickName']) + "' AND wx_bot='"+ bot_info['NickName'] +"';")
+                        total_rebate_amount) + "', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='" + str(time.time()) + "' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
 
 
-                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source) VALUES('"+ bot_info['NickName'] +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2')")
+                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name+"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+puid+"', '"+bot.self.puid+"')")
 
                     args = {
-                        'wx_bot': bot_info['NickName'],
-                        'username': check_user_res[0][2],
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username': check_user_res[0][4],
+                        'puid': puid,
                         'rebate_amount': add_balance,
                         'type': 3,
                         'create_time': time.time()

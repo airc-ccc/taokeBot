@@ -1,12 +1,21 @@
 # -*-coding: UTF-8-*-
 
 import time
-import itchat
+import re
 import configparser
 from urllib.parse import quote
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
+from libs import mediaJd
+from bs4 import BeautifulSoup
+from libs import alimama
+from libs import my_utils
+from libs import tuling
 
+tu = tuling.tuling()
+mjd = mediaJd.MediaJd()
+logger = my_utils.init_logger()
+al = alimama.Alimama(logger)
 ort = Orther()
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
@@ -22,10 +31,8 @@ class TextMessage(object):
         except:
             return False
 
-    def getText(self, msg):
-        wei_info = itchat.search_friends(userName=msg['FromUserName'])
-        bot_info = itchat.search_friends(userName=msg['ToUserName'])
-
+    def getText(self, raw, bot, msg):
+        wei_info = bot.core.search_friends(userName=msg['FromUserName'])
         patternURL = re.compile('^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+')
 
         pattern_bz = re.compile('^帮助$')
@@ -33,7 +40,7 @@ class TextMessage(object):
         pattern_tixian = re.compile('^提现$')
         pattern_tuig = re.compile('^推广$')
         pattern_proxy = re.compile('^代理$')
-
+        appect_friend = re.compile('^我通过了你的朋友验证请求，现在我们可以开始聊天了$')
         # 判断是否是URL链接
         if patternURL.search(msg['Text']) == None:
 
@@ -43,10 +50,10 @@ class TextMessage(object):
             if (pattern_s.search(msg['Text']) != None) | (pattern_z.search(msg['Text']) != None) | (
                     pattern_m.search(msg['Text']) != None):
 
-                res = ort.ishaveuserinfo(msg)
+                res = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
@@ -57,13 +64,67 @@ class TextMessage(object):
 快快点击领取吧！
 京东：%s淘宝：%s
                 ''' % (msg['Text'][1:], jdurl, tburl)
-                itchat.send(text, msg['FromUserName'])
+                return text
+            elif appect_friend.search(msg['Text']) != None:
+                # 获取生成的备注
+                ramerkName = ort.generateRemarkName(bot)
+                logger.debug(ramerkName)
+                # 修改备注
+                bot.core.set_alias(userName=msg['FromUserName'], alias=ramerkName)
+                # 被邀请人puid
+                user_wxid = ort.getPuid(bot, msg['FromUserName'])
+                ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
+                text = '''
+一一一一 系统消息 一一一一
 
+回复【个人信息】查看账户详情
+分享【京东商品链接】或者【淘口令】
+精准查询商品优惠券和返利信息！
+
+优惠券使用教程：
+'''+config.get('URL', 'course')+'''
+免费看电影方法：
+'''+config.get('URL', 'movie')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
+                        '''
+                return text
+            elif ('你已添加了' in msg['Text']) and ('现在可以开始聊天了' in msg['Text']):
+                arrstr = msg['Text'].split('，')
+                str = arrstr[0][5:]
+                logger.debug(str)
+                user = bot.friends().search(str)[0]
+                logger.debug(str, user)
+                # 获取生成的备注
+                ramerkName = ort.generateRemarkName(bot)
+                logger.debug(ramerkName)
+                # 修改备注
+                bot.core.set_alias(nickName=user.user_name, alias=ramerkName)
+                # 被邀请人puid
+                user_wxid = user.puid
+                ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
+                text = '''
+一一一一 系统消息 一一一一
+
+账户创建成功！0.3元奖励金已发放！
+
+回复【个人信息】查看账户详情
+分享【京东商品链接】或者【淘口令】
+精准查询商品优惠券和返利信息！
+
+优惠券使用教程：
+'''+config.get('URL', 'course')+'''
+免费看电影方法：
+'''+config.get('URL', 'movie')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
+                        '''
+                return text
             elif pattern_bz.search(msg['Text']) != None:
-                res = ort.ishaveuserinfo(msg)
+                res = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 # 帮助操作
                 text = '''
@@ -95,96 +156,83 @@ class TextMessage(object):
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
-                itchat.send(text, msg['FromUserName'])
+                return text
             elif pattern_tixian.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(msg)
+                res = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                adminuser = itchat.search_friends(nickName=config.get('ADMIN', 'ADMIN_USER'))
-                select_user_sql = "SELECT * FROM taojin_user_info WHERE wx_number='" + wei_info['NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
-                select_user_res = cm.ExecQuery(select_user_sql)
-                if float(select_user_res[0][9]) > 0:
-                    try:
-	                    # 修改余额
-	                    update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0',update_time='" + str(
-	                        time.time()) + "' WHERE wx_number='" + wei_info['NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
+                try:
+                    select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
+                    select_user_res = cm.ExecQuery(select_user_sql)
+                    if float(select_user_res[0][9]) > 0:
+                        # try:
+                        # 修改余额
+                        update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0',update_time='" + str(time.time()) + "' WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
-	                    total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9]);
-	                    update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + str(
-	                        total_amount) + "',update_time='" + str(time.time()) + "' WHERE wx_number='" + wei_info[
-	                                           'NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                        total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
+                        update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + str(total_amount) + "',update_time='" + str(time.time()) + "' WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
-	                    # 插入提现日志
-	                    insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time) VALUES('" + \
-	                                             bot_info['NickName'] + "', '" + wei_info['NickName'] + "', '" + str(
-	                        select_user_res[0][9]) + "', '" + str(time.time()) + "')"
+                        # 插入提现日志
+                        insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + str(select_user_res[0][9]) + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
 
-	                    to_admin_text = '''
-	一一一一 提现通知 一一一一
+                        to_admin_text = '''
+    一一一一 提现通知 一一一一
 
-	机器人：%s
-	提现人：%s
-	提现金额：%s 元
-	提现时间：%s
-	                                            ''' % (
-	                    bot_info['NickName'], wei_info['NickName'], select_user_res[0][9],
-	                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    机器人：%s
+    提现人：%s
+    提现金额：%s 元
+    提现时间：%s
+                                                ''' % (
+                        bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-	                    cm.ExecNonQuery(update_sql)
-	                    cm.ExecNonQuery(update_total_sql)
-	                    cm.ExecNonQuery(insert_current_log_sql)
+                        cm.ExecNonQuery(update_sql)
+                        cm.ExecNonQuery(update_total_sql)
+                        cm.ExecNonQuery(insert_current_log_sql)
 
-	                    to_user_text = '''
-	一一一一 提现信息 一一一一
+                        to_user_text = '''
+    一一一一 提现信息 一一一一
 
-	提现成功！
-	提现金额将以微信红包的形式发放，请耐心等待！
+    提现成功！
+    提现金额将以微信红包的形式发放，请耐心等待！
 
-	分享【京东商品链接】或者【淘口令】
-	精准查询商品优惠券和返利信息！
-	                                        '''
-	                    itchat.send(to_user_text, msg['FromUserName'])
-
-	                    itchat.send(to_admin_text, adminuser[0]['UserName'])
-	                    return
-                    except Exception as e:
-                        text = '''
+    分享【京东商品链接】或者【淘口令】
+    精准查询商品优惠券和返利信息！
+                                        '''
+                        adminuser.send(to_admin_text)
+                        return to_user_text
+                except Exception as e:
+                    text1 = '''
 一一一一 系统信息 一一一一
 
-提现失败，请稍后重试！                        
-                                '''
-                        print(e)
-                        itchat.send(text, msg['FromUserName'])
-                        return
+提现失败，请稍后重试！
+                            '''
+                    logger.debug(e)
+                    return text1
                 else:
-                    text = '''
+                    text2 = '''
 一一一一 提现信息 一一一一
 
 提现申请失败，账户余额为0！
                                     '''
-                    itchat.send(text, msg['FromUserName'])
-                    return
+                    return text2
             elif pattern_profile.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(msg)
-
+                res = ort.ishaveuserinfo(bot, msg, raw)
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                user_sql = "SELECT * FROM taojin_user_info WHERE wx_number='" + wei_info['NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                user_sql = "SELECT * FROM taojin_user_info WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
                 user_info = cm.ExecQuery(user_sql)
 
-                current = "SELECT sum(amount) FROM taojin_current_log WHERE username='" + wei_info['NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
-
-                # friends_count_sql = "SELECT count(*) FROM taojin_user_info WHERE lnivter='" + str(
-                #     user_info[0][5]) + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                current = "SELECT sum(amount) FROM taojin_current_log WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
                 current_info = cm.ExecQuery(current)
-                # friends_count = cm.ExecQuery(friends_count_sql)
 
                 # 如果总提现金额不存在，赋值为0
                 if current_info[0][0] == None:
@@ -206,20 +254,17 @@ class TextMessage(object):
 淘宝订单量: %s
 总好友返利: %s
 总好友个数: %s
-                                    ''' % (
-                user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][9], current_info, user_info[0][11],
-                user_info[0][12], user_info[0][13], user_info[0][19], user_info[0][20])
+                                    ''' % (user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][9], current_info, user_info[0][11],user_info[0][12], user_info[0][13], user_info[0][19], user_info[0][20])
                 cm.Close()
-                itchat.send(text, msg['FromUserName'])
-                return
+                return text
             elif pattern_tuig.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(msg)
+                res = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                user_sql = "SELECT * FROM taojin_user_info WHERE wx_number='" + wei_info['NickName'] + "' AND wx_bot='"+ bot_info['NickName'] +"';"
+                user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
                 cm.ExecQuery(user_sql)
 
@@ -233,12 +278,12 @@ class TextMessage(object):
 邀请好友得返利：
 '''+config.get('URL', 'lnvit')+'''
                                 '''
-                itchat.send(text, msg['FromUserName'])
+                return text
             elif pattern_proxy.search(msg['Text']) != None:
-                res = ort.ishaveuserinfo(msg)
+                res = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
                 text = '''
 一一一一系统消息一一一一
 
@@ -248,28 +293,26 @@ class TextMessage(object):
 
 客服人员将尽快和您取得联系，请耐心等待!
                         '''
-                itchat.send(text, msg['FromUserName'])
-            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
-                    len(msg['Text'].split(',')[1]) == 11):
+                return text
+            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (len(msg['Text'].split(',')[1]) == 11):
 
-                res2 = ort.ishaveuserinfo(msg)
+                res2 = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info)
+                res = mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                    itchat.send(res['parent_user_text'], res['parent'])
+                    parent = bot.friends().search(res['parent'])
+                    parent.send(res['parent_user_text'])
+                    return res['user_text']
                 elif res['info'] == 'order_exit':
-                    itchat.send(res['send_text'], msg['FromUserName'])
+                    return res['send_text']
                 elif res['info'] == 'not_order':
-                    itchat.send(res['user_text'], msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'not_parent_and_success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                elif res['info'] == 'not_info':
-                    itchat.send('你当前没有个人账户请发送邀请人的邀请码注册个人账户！', msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'feild':
 
                     user_text = '''
@@ -286,27 +329,26 @@ class TextMessage(object):
 
 请按照提示进行重新操作！            
                                         '''
-                    itchat.send(user_text, msg['FromUserName'])
+                    return user_text
             elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
                     len(msg['Text'].split('，')[1]) == 11):
-                res2 = ort.ishaveuserinfo(msg)
+                res2 = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info)
+                res = mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                    itchat.send(res['parent_user_text'], res['parent'])
+                    parent = bot.friends().search(res['parent'])
+                    parent.send(res['parent_user_text'])
+                    return res['user_text']
                 elif res['info'] == 'order_exit':
-                    itchat.send(res['send_text'], msg['FromUserName'])
+                    return res['send_text']
                 elif res['info'] == 'not_order':
-                    itchat.send(res['user_text'], msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'not_parent_and_success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                elif res['info'] == 'not_info':
-                    itchat.send('你当前没有个人账户请发送邀请人的邀请码注册个人账户！', msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'feild':
 
                     user_text = '''
@@ -323,29 +365,26 @@ class TextMessage(object):
 
 请按照提示进行重新操作！            
                                         '''
-
-                    itchat.send(user_text, msg['FromUserName'])
+                    return user_text
             elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
                     len(msg['Text'].split(',')[1]) == 18):
-                res2 = ort.ishaveuserinfo(msg)
+                res2 = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info)
+                res = al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                    itchat.send(res['parent_user_text'], res['parent'])
-                    return
+                    parent = bot.friends().search(res['parent'])
+                    parent.send(res['parent_user_text'])
+                    return res['user_text']
                 elif res['info'] == 'order_exit':
-                    itchat.send(res['send_text'], msg['FromUserName'])
+                    return res['send_text']
                 elif res['info'] == 'not_order':
-                    itchat.send(res['user_text'], msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'not_parent_and_success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                elif res['info'] == 'not_info':
-                    itchat.send('你当前没有个人账户请发送邀请人的邀请码注册个人账户！', msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'feild':
                     user_text = '''
 一一一一订单信息一一一一
@@ -362,28 +401,26 @@ class TextMessage(object):
 请按照提示进行重新操作！            
                                         '''
 
-                    itchat.send(user_text, msg['FromUserName'])
+                    return user_text
             elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
                     len(msg['Text'].split('，')[1]) == 18):
-                res2 = ort.ishaveuserinfo(msg)
+                res2 = ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(msg, 0, tool=False)
+                    ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info)
+                res = al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                    itchat.send(res['parent_user_text'], res['parent'])
-                    return
+                    parent = bot.friends().search(res['parent'])
+                    parent.send(res['parent_user_text'])
+                    return res['user_text']
                 elif res['info'] == 'order_exit':
-                    itchat.send(res['send_text'], msg['FromUserName'])
+                    return res['send_text']
                 elif res['info'] == 'not_order':
-                    itchat.send(res['user_text'], msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'not_parent_and_success':
-                    itchat.send(res['user_text'], msg['FromUserName'])
-                elif res['info'] == 'not_info':
-                    itchat.send('你当前没有个人账户请发送邀请人的邀请码注册个人账户！', msg['FromUserName'])
+                    return res['user_text']
                 elif res['info'] == 'feild':
                     user_text = '''
 一一一一订单信息一一一一
@@ -400,7 +437,7 @@ class TextMessage(object):
 请按照提示进行重新操作！            
                                         '''
 
-                    itchat.send(user_text, msg['FromUserName'])
+                    return user_text
             elif (',' in msg['Text']) and (self.is_valid_date(msg['Text'].split(',')[0])):
                 user_text = '''
 一一一一系统消息一一一一
@@ -414,7 +451,7 @@ class TextMessage(object):
 
 请确认修改后重新发送
                                         '''
-                itchat.send(user_text, msg['FromUserName'])
+                return user_text
             elif ('，' in msg['Text']) and (self.is_valid_date(msg['Text'].split('，')[0])):
                 user_text = '''
 一一一一系统消息一一一一
@@ -428,23 +465,20 @@ class TextMessage(object):
 
 请确认修改后重新发送
                                         '''
-                itchat.send(user_text, msg['FromUserName'])
+                return user_text
             else:
                 msg_text = tu.tuling(msg)
-                itchat.send(msg_text, msg['FromUserName'])
-                return
+                logger.debug(msg_text)
+                return msg_text
         else:
-            res2 = ort.ishaveuserinfo(msg)
+            res2 = ort.ishaveuserinfo(bot, msg, raw)
 
             if res2['res'] == 'not_info':
-                ort.create_user_info(msg, 0, tool=False)
+                ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-            mjd.getJd(msg, msg['Text'])
+            mjd.getJd(raw, bot, msg, msg['Text'])
 
-    def getGroupText(self, msg):
-        cm = ConnectMysql()
-        wei_info = itchat.search_friends(userName=msg['FromUserName'])
-
+    def getGroupText(self, bot, msg):
         patternURL = re.compile('^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+')
 
         pattern_bz = re.compile('^帮助$')
@@ -471,8 +505,7 @@ class TextMessage(object):
 京东：%s
 淘宝：%s
                         ''' % (msg['Text'][1:], jdurl, tburl)
-                itchat.send(text, msg['FromUserName'])
-
+                return text
             elif pattern_bz.search(msg['Text']) != None:
                 # 帮助操作
                 text = '''
@@ -504,7 +537,7 @@ class TextMessage(object):
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
-                itchat.send(text, msg['FromUserName'])
+                return text
             elif pattern_tuig.search(msg['Text']) != None:
                 text = '''
 一一一一 推广信息 一一一一
@@ -516,7 +549,7 @@ class TextMessage(object):
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                                 '''
-                itchat.send(text, msg['FromUserName'])
+                return text
             elif pattern_proxy.search(msg['Text']) != None:
                 text = '''
 一一一一系统消息一一一一
@@ -527,8 +560,8 @@ class TextMessage(object):
 
 客服人员将尽快和您取得联系，请耐心等待！
                         '''
-                itchat.send(text, msg['FromUserName'])
+                return text
             else:
                 return
         else:
-            mjd.getGroupJd(msg, msg['Text'])
+            mjd.getGroupJd(bot, msg, msg['Text'])

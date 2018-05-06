@@ -19,6 +19,7 @@ config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")
 # 初始化机器人，扫码登陆
 bot = Bot(cache_path='peng.pkl')
+bot.enable_puid('wxpy_puid.pkl')
 mu = my_utils.init_logger()
 fm = groupMessage.FormData()
 mj = mediaJd.MediaJd()
@@ -27,12 +28,12 @@ wb = wx_bot.tbAndJd()
 ort = orther.Orther()
 
 
-# 初始化登录京东 淘宝，和开启群发
 def taojin_init():
     if config.get('SYS', 'gm') == 'yes':
-       fm.groupMessages()
+       fm.groupMessages(bot)
 
     if config.get('SYS', 'jd') == 'yes':
+        print('jd..start....')
         mj.login()
 
     if config.get('SYS', 'tb') == 'yes':
@@ -41,31 +42,41 @@ def taojin_init():
 # 消息回复(文本类型和分享类型消息)
 @bot.register()
 def text(msg):
-    print(msg)
-    wb.check_if_is_tb_link(msg.raw)
+    print(msg.raw, 'aaaa')
+    res = wb.check_if_is_tb_link(msg.raw, bot, msg)
+    msg.reply(res)
 
 # 消息回复(文本类型和分享类型消息) 群聊
 @bot.register(Group)
 def group_text(msg):
-    print(msg)
-    wb.check_if_is_group(msg.raw)
+    res = wb.check_if_is_group(msg.raw, bot, msg)
+    msg.reply(res)
 
 # # 自动通过好友验证
 @bot.register(msg_types = FRIENDS)
 def auto_accept_friends(msg):
-    # 接受好友请求
-    print(msg)
+    # 通过好友验证
     new_friend = msg.card.accept()
-    print(new_friend)
+    # 获取生成的备注
+    ramerkName = ort.generateRemarkName(bot)
+    # 修改备注
+    bot.core.set_alias(userName=msg.raw['RecommendInfo']['UserName'], alias=ramerkName)
+    # 获取邀请人
     soup = BeautifulSoup(msg.raw.get('Content'), 'lxml')
     msg_soup = soup.find('msg')
-    sourc = msg_soup.get('sourceusername')
+    # 邀请人昵称
     sourcname = msg_soup.get('sourcenickname')
-    user_wxid = msg_soup.get('fromusername')
-    if sourc == '':
+    # 被邀请人puid
+    user_wxid = new_friend.puid
+    if sourcname == '':
         sourc = 0
+    else:
+        # 获取邀请人puid
+        lnivt_user = bot.friends().search(sourcname)[0]
+        sourc = lnivt_user.puid
 
-    ort.create_user_info(msg.raw, lnivt_code=sourc, tool=True, wxid=user_wxid, sourcname=sourcname)
+    mu.debug(msg)
+    ort.create_user_info(msg, bot, msg.raw, lnivt_code=sourc, tool=True, wxid=user_wxid, sourcname=sourcname)
     text = '''
 一一一一 系统消息 一一一一
 
@@ -84,7 +95,9 @@ def auto_accept_friends(msg):
             '''
     new_friend.send(text)
 
-embed()
 
-if __name__ == 'main':
+if __name__ =='__main__':
+    print('init......')
     taojin_init()
+
+embed()
