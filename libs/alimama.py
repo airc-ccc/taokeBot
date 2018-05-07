@@ -592,7 +592,6 @@ class Alimama:
             f.write(json.dumps(cookies_arr))
         return 'login success'
 
-
     def isElementExist(self, bower, element):
         try:
             bower.find_element_by_id(element)

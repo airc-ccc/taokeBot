@@ -42,7 +42,6 @@ def taojin_init():
 # 消息回复(文本类型和分享类型消息)
 @bot.register()
 def text(msg):
-    print(msg.raw, 'aaaa')
     res = wb.check_if_is_tb_link(msg.raw, bot, msg)
     msg.reply(res)
 

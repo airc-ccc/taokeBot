@@ -5,7 +5,6 @@ import requests
 import time
 import json
 import platform
-import itchat
 import re
 import os
 import configparser
@@ -34,19 +33,17 @@ class MediaJd:
             self.logger = logger
 
     def getJd(self, raw, bot, msg, good_url):
-        if config.get('SYS', 'jd') == 'no':
-            text = '''
-一一一一系统信息一一一一
-暂不支持京东链接
-                    '''
-            return text
+#         if config.get('SYS', 'jd') == 'no':
+#             text = '''
+# 一一一一系统信息一一一一
+# 暂不支持京东链接
+#                     '''
+#             return text
 
         cm = ConnectMysql()
 
         # 用户第一次查询，修改备注
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+bot.self.puid+"'")
-
-        logger.debug(query_good)
         if query_good == ():
             new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'B')
             logger.debug(new_remark_name)
@@ -54,7 +51,7 @@ class MediaJd:
 
             cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
-        self.logger.debug('开始查询分享商品的信息......'+msg['Text'])
+        print('开始查询分享商品的信息......'+msg['Text'])
 
         bot_puid = bot.self.puid
 
@@ -66,6 +63,7 @@ class MediaJd:
 
         sku = sku_arr[1].split('.')
         res = self.get_good_link(sku[0])
+        self.logger.debug(res)
         if res['data']['shotCouponUrl'] == '':
             text = '''
 一一一一返利信息一一一一
@@ -239,88 +237,93 @@ class MediaJd:
 
     def get_good_link(self, good_name):
         self.load_cookies()
-        uu = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword='" + good_name + "'&input_keyword='" + good_name + "'&price=PC"
-        # 搜索商品
-        res = self.se.get(uu)
-        # 使用BeautifulSoup解析HTML，并提取属性数据
-        soup = BeautifulSoup(res.text, 'lxml')
-        a = soup.select('.extension-btn')
-        coupon = soup.find(attrs={'style':'color: #ff5400;'})
-        coupon_price = 0;
-        if coupon != None:
-            coupon_text = coupon.string
+        try:
 
-            coupon_price = coupon_text.split('减')[1]
+            uu = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=" + good_name + "&input_keyword=" + good_name + "&price=PC"
+            # 搜索商品
+            res = self.se.get(uu)
+            print(res.text)
+            # 使用BeautifulSoup解析HTML，并提取属性数据
+            soup = BeautifulSoup(res.text, 'lxml')
+            a = soup.select('.extension-btn')
+            coupon = soup.find(attrs={'style':'color: #ff5400;'})
+            coupon_price = 0;
+            if coupon != None:
+                coupon_text = coupon.string
 
-        request_id = soup.select('#requestId')
+                coupon_price = coupon_text.split('减')[1]
 
-        str_onclick = a[0].get('onclick')
+            request_id = soup.select('#requestId')
 
-        string = str_onclick[13:-8]
+            str_onclick = a[0].get('onclick')
 
-        arr = string.split(',')
+            string = str_onclick[13:-8]
 
-        dict_str = {}
+            arr = string.split(',')
 
-        for item in arr:
-            str = item.split('\':')
-            str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
-            str_1 = str_b[1].strip()
-            str_2 = str_1.split('\'')
-            str_3 = str[1].split('\'')
+            dict_str = {}
 
-            if len(str_3) >= 2:
-                dict_str[str_2[1]] = str_3[1]
+            for item in arr:
+                str = item.split('\':')
+                str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
+                str_1 = str_b[1].strip()
+                str_2 = str_1.split('\'')
+                str_3 = str[1].split('\'')
+
+                if len(str_3) >= 2:
+                    dict_str[str_2[1]] = str_3[1]
+                else:
+                    dict_str[str_2[1]] = str_3[0]
+
+            # 拼装FormData
+            dict_str['adtType'] = 31
+            dict_str['siteName'] = -1
+            dict_str['unionWebId'] = -1
+            dict_str['protocol'] = 1
+            dict_str['codeType'] = 2
+            dict_str['type'] = 1
+            dict_str['positionId'] = 1194027498
+            dict_str['positionName'] = '京推推推广位'
+            dict_str['sizeId'] = -1
+            dict_str['logSizeName'] = -1
+            dict_str['unionAppId'] = -1
+            dict_str['unionMediaId'] = -1
+            dict_str['materialType'] = 1
+            dict_str['orienPlanId'] = -1
+            dict_str['landingPageType'] = -1
+            dict_str['adOwner'] = 'z_0'
+            dict_str['saler'] = -1
+            dict_str['isApp'] = -1
+            dict_str['actId'] = dict_str['materialId']
+            dict_str['wareUrl'] = dict_str['pcDetails']
+            dict_str['category'] = dict_str['logCategory']
+            dict_str['requestId'] = request_id[0].get('value')
+
+            # 删除多余的属性
+            dict_str.pop('logCategory')
+            dict_str.pop('pcDetails')
+            dict_str.pop('mDetails')
+
+            # 获取领券链接和下单链接
+            good_link = self.se.post('https://media.jd.com/gotoadv/getCustomCodeURL', data=dict_str)
+
+            good_text = json.loads(good_link.text)
+            good_text['logTitle'] = dict_str['logTitle']
+            good_text['logUnitPrice'] = dict_str['logUnitPrice']
+            good_text['imgUrl'] = dict_str['imgUrl']
+            rebate = float(dict_str['pcComm']) / 100
+            if coupon != None:
+                good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
+                good_text['youhuiquan_price'] = coupon_price
+                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
             else:
-                dict_str[str_2[1]] = str_3[0]
+                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
 
-        # 拼装FormData
-        dict_str['adtType'] = 31
-        dict_str['siteName'] = -1
-        dict_str['unionWebId'] = -1
-        dict_str['protocol'] = 1
-        dict_str['codeType'] = 2
-        dict_str['type'] = 1
-        dict_str['positionId'] = 1194027498
-        dict_str['positionName'] = '京推推推广位'
-        dict_str['sizeId'] = -1
-        dict_str['logSizeName'] = -1
-        dict_str['unionAppId'] = -1
-        dict_str['unionMediaId'] = -1
-        dict_str['materialType'] = 1
-        dict_str['orienPlanId'] = -1
-        dict_str['landingPageType'] = -1
-        dict_str['adOwner'] = 'z_0'
-        dict_str['saler'] = -1
-        dict_str['isApp'] = -1
-        dict_str['actId'] = dict_str['materialId']
-        dict_str['wareUrl'] = dict_str['pcDetails']
-        dict_str['category'] = dict_str['logCategory']
-        dict_str['requestId'] = request_id[0].get('value')
-
-        # 删除多余的属性
-        dict_str.pop('logCategory')
-        dict_str.pop('pcDetails')
-        dict_str.pop('mDetails')
-
-        # 获取领券链接和下单链接
-        good_link = self.se.post('https://media.jd.com/gotoadv/getCustomCodeURL', data=dict_str)
-
-        good_text = json.loads(good_link.text)
-        good_text['logTitle'] = dict_str['logTitle']
-        good_text['logUnitPrice'] = dict_str['logUnitPrice']
-        good_text['imgUrl'] = dict_str['imgUrl']
-        rebate = float(dict_str['pcComm']) / 100
-        if coupon != None:
-            good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
-            good_text['youhuiquan_price'] = coupon_price
-            good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
-        else:
-            good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
-
-        good_text['coupon_price2'] = coupon_price
-        return good_text
-
+            good_text['coupon_price2'] = coupon_price
+            return good_text
+        except Exception as e:
+            self.logger.debug(e)
+            return e
 
     # 随机获取商品信息
     def get_good_info(self, bot):
