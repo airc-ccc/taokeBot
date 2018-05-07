@@ -1014,7 +1014,27 @@ class Alimama:
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
 
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'C')
+                        logger.debug(new_remark_name)
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
                     cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')")
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+                    
+                    new_remark_name2 = "%s%s" % (raw.sender.remark_name[0:-5], len(order_nums))
+
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
@@ -1083,7 +1103,27 @@ class Alimama:
                         total_rebate_amount) + "', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='" + str(time.time()) + "' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
 
 
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'C')
+                        logger.debug(new_remark_name)
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
                     cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name+"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+puid+"', '"+bot.self.puid+"')")
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+                    
+                    new_remark_name2 = "%s%s" % (raw.sender.remark_name[0:-5], len(order_nums))
+
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
