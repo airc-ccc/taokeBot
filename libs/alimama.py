@@ -45,7 +45,6 @@ class Alimama:
 
     def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
-            self.logger.debug(config.get('SYS', 'tb'))
             text = '''
 一一一一系统信息一一一一
 暂不支持淘宝商品查询
@@ -615,7 +614,9 @@ class Alimama:
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
         if query_good == ():
-            new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'B')
+            
+            split_arr = raw.sender.remark_name.split('_')
+            new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
             self.logger.debug(new_remark_name)
             bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
@@ -866,7 +867,7 @@ class Alimama:
 
         return r_url
 
-    def get_order(self, bot, msg, times, orderId, userInfo, puid):
+    def get_order(self, bot, msg, times, orderId, userInfo, puid, raw):
 
         timestr = re.sub('-', '', times)
         order_id = int(orderId)
@@ -918,7 +919,7 @@ class Alimama:
 
             for item in res_dict['data']['paymentList']:
                 if int(order_id) == int(item['taobaoTradeParentId']):
-                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid)
+                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
                     return res
 
             user_text = '''
@@ -942,7 +943,7 @@ class Alimama:
             return {"info":"feild"}
 
 
-    def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid):
+    def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
         try:
             cm = ConnectMysql()
 
@@ -1019,8 +1020,9 @@ class Alimama:
                     order_num = cm.ExecQuery(select_order_num)
 
                     if order_num == ():
-                        new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'C')
-                        logger.debug(new_remark_name)
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        self.logger.debug(new_remark_name)
                         bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                         cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
@@ -1030,7 +1032,9 @@ class Alimama:
                     # 累计订单数量
                     order_nums = cm.ExecQuery(select_order_num)
                     
-                    new_remark_name2 = "%s%s" % (raw.sender.remark_name[0:-5], len(order_nums))
+                    split_arr2 = raw.sender.remark_name.split('_')
+                
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
 
@@ -1108,8 +1112,9 @@ class Alimama:
                     order_num = cm.ExecQuery(select_order_num)
 
                     if order_num == ():
-                        new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'C')
-                        logger.debug(new_remark_name)
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        self.logger.debug(new_remark_name)
                         bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                         cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
@@ -1119,7 +1124,9 @@ class Alimama:
                     # 累计订单数量
                     order_nums = cm.ExecQuery(select_order_num)
                     
-                    new_remark_name2 = "%s%s" % (raw.sender.remark_name[0:-5], len(order_nums))
+                    split_arr2 = raw.sender.remark_name.split('_')
+                
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
 

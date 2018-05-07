@@ -301,7 +301,7 @@ class TextMessage(object):
                 if res2['res'] == 'not_info':
                     ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
+                res = mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -337,7 +337,7 @@ class TextMessage(object):
                 if res2['res'] == 'not_info':
                     ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
+                res = mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -373,7 +373,7 @@ class TextMessage(object):
                 if res2['res'] == 'not_info':
                     ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
+                res = al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -409,7 +409,7 @@ class TextMessage(object):
                 if res2['res'] == 'not_info':
                     ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
+                res = al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])

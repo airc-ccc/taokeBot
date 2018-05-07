@@ -28,9 +28,14 @@ class tbAndJd(object):
     def check_if_is_tb_link(self, msg, bot, raw):
         if re.search(r'【.*】', msg['Text']) and (
                 u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉天猫APP👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text']):
+            res = self.ort.ishaveuserinfo(bot, msg, raw)
+            self.logger.debug(res)
+            if res['res'] == 'not_info':
+                self.ort.create_user_info(raw, bot, msg, 0, tool=False)
             return self.al.getTao(bot, msg, raw)
         elif msg['Type'] == 'Sharing':  # vip 电影
             res = self.ort.ishaveuserinfo(bot, msg, raw)
+            self.logger.debug(res)
             if res['res'] == 'not_info':
                 self.ort.create_user_info(raw, bot, msg, 0, tool=False)
             htm = re.findall(r"<appname>.*?</appname>", msg['Content'])
