@@ -13,12 +13,12 @@ from libs import alimama
 from libs import groupMessage
 
 class tbAndJd(object):
-    def __init__(self):
+    def __init__(self, bot):
         self.logger = my_utils.init_logger()
-        self.mjd = mediaJd.MediaJd()
-        self.al = alimama.Alimama(self.logger)
+        self.mjd = mediaJd.MediaJd(bot)
+        self.al = alimama.Alimama(self.logger, bot)
         self.movie = movie.SharMovie()
-        self.tm = textMessage.TextMessage()
+        self.tm = textMessage.TextMessage(bot)
         self.fm = groupMessage.FormData()
         self.ort = orther.Orther()
         self.config = configparser.ConfigParser()
@@ -55,7 +55,6 @@ class tbAndJd(object):
                 soup_xml = BeautifulSoup(msg['Content'], 'lxml')
                 xml_info = soup_xml.select('appname')
                 if xml_info[0].string == "京东":
-                    self.logger.debug(msg)
                     return self.mjd.getGroupJd(bot, msg, msg['Url'], raw)
                 else:
                     return self.movie.getGroupMovie(msg)

@@ -7,22 +7,21 @@ from urllib.parse import quote
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
 from libs import mediaJd
-from bs4 import BeautifulSoup
 from libs import alimama
 from libs import my_utils
 from libs import tuling
 
-tu = tuling.tuling()
-mjd = mediaJd.MediaJd()
-logger = my_utils.init_logger()
-al = alimama.Alimama(logger)
-ort = Orther()
-config = configparser.ConfigParser()
-config.read('config.conf',encoding="utf-8-sig")
 
-class TextMessage(object):
-    def __init__(self):
-        pass
+config = configparser.ConfigParser()
+config.read('config.conf', encoding="utf-8-sig")
+
+class TextMessage:
+    def __init__(self, bot):
+        self.tu = tuling.tuling()
+        self.mjd = mediaJd.MediaJd(bot)
+        self.logger = my_utils.init_logger()
+        self.al = alimama.Alimama(self.logger, bot)
+        self.ort = Orther()
 
     def is_valid_date(self, str):
         try:
@@ -50,10 +49,10 @@ class TextMessage(object):
             if (pattern_s.search(msg['Text']) != None) | (pattern_z.search(msg['Text']) != None) | (
                     pattern_m.search(msg['Text']) != None):
 
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
@@ -67,13 +66,13 @@ class TextMessage(object):
                 return text
             elif appect_friend.search(msg['Text']) != None:
                 # 获取生成的备注
-                ramerkName = ort.generateRemarkName(bot)
-                logger.debug(ramerkName)
+                ramerkName = self.ort.generateRemarkName(bot)
+                self.logger.debug(ramerkName)
                 # 修改备注
                 bot.core.set_alias(userName=msg['FromUserName'], alias=ramerkName)
                 # 被邀请人puid
-                user_wxid = ort.getPuid(bot, msg['FromUserName'])
-                ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
+                user_wxid = self.ort.getPuid(bot, msg['FromUserName'])
+                self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
 一一一一 系统消息 一一一一
 
@@ -92,17 +91,17 @@ class TextMessage(object):
             elif ('你已添加了' in msg['Text']) and ('现在可以开始聊天了' in msg['Text']):
                 arrstr = msg['Text'].split('，')
                 str = arrstr[0][5:]
-                logger.debug(str)
+                self.logger.debug(str)
                 user = bot.friends().search(str)[0]
-                logger.debug(str, user)
+                self.logger.debug(str, user)
                 # 获取生成的备注
-                ramerkName = ort.generateRemarkName(bot)
-                logger.debug(ramerkName)
+                ramerkName = self.ort.generateRemarkName(bot)
+                self.logger.debug(ramerkName)
                 # 修改备注
                 bot.core.set_alias(nickName=user.user_name, alias=ramerkName)
                 # 被邀请人puid
                 user_wxid = user.puid
-                ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
+                self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
 一一一一 系统消息 一一一一
 
@@ -121,10 +120,10 @@ class TextMessage(object):
                         '''
                 return text
             elif pattern_bz.search(msg['Text']) != None:
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 # 帮助操作
                 text = '''
@@ -159,10 +158,10 @@ class TextMessage(object):
                 return text
             elif pattern_tixian.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
                 try:
@@ -211,7 +210,7 @@ class TextMessage(object):
 
 提现失败，请稍后重试！
                             '''
-                    logger.debug(e)
+                    self.logger.debug(e)
                     return text1
                 else:
                     text2 = '''
@@ -222,9 +221,9 @@ class TextMessage(object):
                     return text2
             elif pattern_profile.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 user_sql = "SELECT * FROM taojin_user_info WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
@@ -259,10 +258,10 @@ class TextMessage(object):
                 return text
             elif pattern_tuig.search(msg['Text']) != None:
                 cm = ConnectMysql()
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
 
@@ -280,10 +279,10 @@ class TextMessage(object):
                                 '''
                 return text
             elif pattern_proxy.search(msg['Text']) != None:
-                res = ort.ishaveuserinfo(bot, msg, raw)
+                res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
                 text = '''
 一一一一系统消息一一一一
 
@@ -296,12 +295,12 @@ class TextMessage(object):
                 return text
             elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (len(msg['Text'].split(',')[1]) == 11):
 
-                res2 = ort.ishaveuserinfo(bot, msg, raw)
+                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
+                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -332,12 +331,12 @@ class TextMessage(object):
                     return user_text
             elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
                     len(msg['Text'].split('，')[1]) == 11):
-                res2 = ort.ishaveuserinfo(bot, msg, raw)
+                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
+                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -368,12 +367,12 @@ class TextMessage(object):
                     return user_text
             elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
                     len(msg['Text'].split(',')[1]) == 18):
-                res2 = ort.ishaveuserinfo(bot, msg, raw)
+                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
+                res = self.al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -404,12 +403,12 @@ class TextMessage(object):
                     return user_text
             elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
                     len(msg['Text'].split('，')[1]) == 18):
-                res2 = ort.ishaveuserinfo(bot, msg, raw)
+                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
-                    ort.create_user_info(raw, bot, msg, 0, tool=False)
+                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
+                res = self.al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid)
 
                 if res['info'] == 'success':
                     parent = bot.friends().search(res['parent'])
@@ -467,16 +466,16 @@ class TextMessage(object):
                                         '''
                 return user_text
             else:
-                msg_text = tu.tuling(msg)
-                logger.debug(msg_text)
+                msg_text = self.tu.tuling(msg)
+                self.logger.debug(msg_text)
                 return msg_text
         else:
-            res2 = ort.ishaveuserinfo(bot, msg, raw)
+            res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
             if res2['res'] == 'not_info':
-                ort.create_user_info(raw, bot, msg, 0, tool=False)
+                self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-            mjd.getJd(raw, bot, msg, msg['Text'])
+                self.mjd.getJd(raw, bot, msg, msg['Text'])
 
     def getGroupText(self, bot, msg):
         patternURL = re.compile('^((https|http|ftp|rtsp|mms)?:\/\/)[^\s]+')
@@ -564,4 +563,4 @@ class TextMessage(object):
             else:
                 return
         else:
-            mjd.getGroupJd(bot, msg, msg['Text'])
+            self.mjd.getGroupJd(bot, msg, msg['Text'])

@@ -2,13 +2,15 @@
 
 from bs4 import BeautifulSoup
 import configparser
+import requests
 
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
 
 class SharMovie(object):
     def __init__(self):
-        pass
+        long = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=%E9%9E%8B%E5%AD%90&input_keyword=%E9%9E%8B%E5%AD%90&price=PC"
+        self.getShortUrl(long)
 
     def getMovie(self, msg):
         soup_xml = BeautifulSoup(msg['Content'], 'lxml')
@@ -61,3 +63,6 @@ class SharMovie(object):
 '''+config.get('URL', 'lnvit')+'''
                         '''
                 return text
+
+    def getShortUrl(self, longUrl):
+        pass

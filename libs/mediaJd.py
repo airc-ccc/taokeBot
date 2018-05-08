@@ -3,8 +3,10 @@
 
 import requests
 import time
+from threading import Thread
 import json
 import platform
+import datetime
 import re
 import os
 import configparser
@@ -26,19 +28,24 @@ ort = Orther()
 tu = tuling()
 
 class MediaJd:
-    def __init__(self):
+    def __init__(self, bot):
         if config.get('SYS', 'jd') == 'yes':
             self.se = requests.session()
             self.load_cookies()
             self.logger = logger
 
+    def start_keep_get_order(self, bot):
+        t = Thread(target=self.getOrderInfo, args=(bot,))
+        t.setDaemon(True)
+        t.start()
+
     def getJd(self, raw, bot, msg, good_url):
-#         if config.get('SYS', 'jd') == 'no':
-#             text = '''
-# 一一一一系统信息一一一一
-# 暂不支持京东链接
-#                     '''
-#             return text
+        if config.get('SYS', 'jd') == 'no':
+            text = '''
+一一一一系统信息一一一一
+暂不支持京东链接
+                    '''
+            return text
 
         cm = ConnectMysql()
 
@@ -81,8 +88,8 @@ class MediaJd:
 2018-01-01,12345678901
                 ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"')"
+            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
             cm.ExecNonQuery(insert_sql)
             return text
         else:
@@ -106,8 +113,8 @@ class MediaJd:
             res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
             res['data']['shotCouponUrl'])
 
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"')"
+            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
             cm.ExecNonQuery(insert_sql)
 
             return text
@@ -140,10 +147,11 @@ class MediaJd:
  返利链接:%s
                 ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
 
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom) VALUES('"+ bot.self.nick_name +"', '" + \
+            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
                          res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
-                             'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"')"
+                             'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
             cm.ExecNonQuery(insert_sql)
+            self.logger.debug(res['skuid'])
             return text
         else:
             text = '''
@@ -159,11 +167,11 @@ class MediaJd:
             res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
             res['data']['shotCouponUrl'])
 
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom) VALUES('"+ bot.self.nick_name +"', '" + \
+            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
                          res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
-                         msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"')"
+                         msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
             cm.ExecNonQuery(insert_sql)
-
+            self.logger.debug(res['skuid'])
             return text
 
     def check_login(self):
@@ -242,7 +250,6 @@ class MediaJd:
             uu = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=" + good_name + "&input_keyword=" + good_name + "&price=PC"
             # 搜索商品
             res = self.se.get(uu)
-            print(res.text)
             # 使用BeautifulSoup解析HTML，并提取属性数据
             soup = BeautifulSoup(res.text, 'lxml')
             a = soup.select('.extension-btn')
@@ -309,6 +316,7 @@ class MediaJd:
 
             good_text = json.loads(good_link.text)
             good_text['logTitle'] = dict_str['logTitle']
+            good_text['skuid'] = dict_str['materialId']
             good_text['logUnitPrice'] = dict_str['logUnitPrice']
             good_text['imgUrl'] = dict_str['imgUrl']
             rebate = float(dict_str['pcComm']) / 100
@@ -409,11 +417,11 @@ class MediaJd:
         self.load_cookies()
 
         url = 'https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B'
-        print(url)
+
         res = requests.get(url)
 
         rj = json.loads(res.text)
-        print(rj, url)
+
         data = json.loads(rj['jingdong_UnionService_queryOrderList_responce']['result'])
 
         for item in data['data']:
@@ -609,3 +617,30 @@ class MediaJd:
         # except Exception as e:
         #     print(e)
         #     return {'info': 'feild'}
+
+    def getOrderInfo(self, bot):
+
+        timestr = "%s%s%s" % (datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day)
+        # timestr = '20180506'
+        url = 'https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B'
+
+        while True:
+            time.sleep(10)
+
+            res = requests.get(url)
+
+            rj = json.loads(res.text)
+
+            data = json.loads(rj['jingdong_UnionService_queryOrderList_responce']['result'])
+
+            # 判断数据是否为空
+            # if "data" in data:
+            #     for item in data:
+            #         insert_sql = "INSERT INTO taojin_order_info(bot_puid, skuid, order_id, type, create_time) VALUES('"+bot.self.puid+"', '"+ item['skuList'][] +"')"
+
+            self.logger.debug(rj)
+
+
+
+
+

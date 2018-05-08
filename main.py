@@ -22,11 +22,10 @@ bot = Bot(cache_path='peng.pkl')
 bot.enable_puid('wxpy_puid.pkl')
 mu = my_utils.init_logger()
 fm = groupMessage.FormData()
-mj = mediaJd.MediaJd()
-al = alimama.Alimama(mu)
-wb = wx_bot.tbAndJd()
+mj = mediaJd.MediaJd(bot)
+al = alimama.Alimama(mu, bot)
+wb = wx_bot.tbAndJd(bot)
 ort = orther.Orther()
-
 
 def taojin_init():
     if config.get('SYS', 'gm') == 'yes':

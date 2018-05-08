@@ -34,14 +34,13 @@ config.read('config.conf',encoding="utf-8-sig")
 ort = Orther()
 
 class Alimama:
-    def __init__(self, logger):
+    def __init__(self, logger, bot):
         if config.get('SYS', 'tb') == 'yes':
             self.se = requests.session()
             self.load_cookies()
             self.myip = "127.0.0.1"
             self.start_keep_cookie_thread()
             self.logger = logger
-
 
     def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
@@ -271,9 +270,15 @@ class Alimama:
 '''+config.get('URL', 'movie')+'''
                     '''
             return res_text
+
     # 启动一个线程，定时访问淘宝联盟主页，防止cookie失效
     def start_keep_cookie_thread(self):
         t = Thread(target=self.visit_main_url, args=())
+        t.setDaemon(True)
+        t.start()
+
+    def start_keep_get_order(self, bot):
+        t = Thread(target=self.getOrderInfo, args=(bot,))
         t.setDaemon(True)
         t.start()
 
@@ -509,7 +514,6 @@ class Alimama:
         self.logger.debug("TaoBao Login Out!")
         return qrimg
 
-
     # do login
     def do_login(self):
         self.logger.debug('begin to login')
@@ -642,7 +646,7 @@ class Alimama:
             res = self.get_url(url, headers)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -655,7 +659,7 @@ class Alimama:
     # 获取商品详情
     def get_group_detail(self, bot, q, raw):
         cm = ConnectMysql()
-        chatrooms = bot.core.search_chatroom(userName=raw.raw['FromUserName'])
+        chatrooms = bot.core.search_chatrooms(userName=raw.raw['FromUserName'])
         try:
             t = int(time.time() * 1000)
             tb_token = self.se.cookies.get('_tb_token_', domain="pub.alimama.com")
@@ -675,10 +679,9 @@ class Alimama:
                 'accept-language': 'en-US,en;q=0.5',
             }
             res = self.get_url(url, headers)
-            print(res.text)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -941,7 +944,6 @@ class Alimama:
             self.logger.debug(e)
             return {"info":"feild"}
 
-
     def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid):
         try:
             cm = ConnectMysql()
@@ -1113,6 +1115,51 @@ class Alimama:
         except Exception as e:
             self.logger.debug(e)
             return {'info': 'feild'}
+
+    # 定时获取淘宝订单信息
+    def getOrderInfo(self, bot):
+        self.load_cookies()
+
+        endTime = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+
+        startTime = str((datetime.date.today() - datetime.timedelta(days=1)))
+
+        t = str(round(time.time()))
+
+        url = "http://pub.alimama.com/report/getTbkPaymentDetails.json?startTime="+startTime+"&endTime="+endTime+"&payStatus=3&queryType=1&toPage=1&perPageSize=50&total=&t="+t+"&pvid=&_tb_token_=f8b388e3f3e37&_input_charset=utf-8"
+
+        headers = {
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control": "no-cache",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Host": "pub.alimama.com",
+            "Pragma": "no-cache",
+            "Referer": "http://pub.alimama.com/myunion.htm?spm=a219t.7900221/1.a214tr8.2.3d7c75a560ieiE",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+
+        while True:
+            # 间隔3个小时
+            time.sleep(10)
+            try:
+                # 请求订单接口
+                res = self.get_url(url, headers)
+                # 格式转化一下
+                res_dict = json.loads(res.text)
+
+                self.logger.debug(res_dict)
+            except Exception as e:
+                self.logger.debug(e)
+                return e
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
