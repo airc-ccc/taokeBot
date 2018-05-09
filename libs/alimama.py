@@ -44,7 +44,6 @@ class Alimama:
 
     def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
-            self.logger.debug(config.get('SYS', 'tb'))
             text = '''
 一一一一系统信息一一一一
 暂不支持淘宝商品查询
@@ -619,7 +618,9 @@ class Alimama:
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
         if query_good == ():
-            new_remark_name = raw.sender.remark_name.replace(raw.sender.remark_name[-2:-1], 'B')
+            
+            split_arr = raw.sender.remark_name.split('_')
+            new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
             self.logger.debug(new_remark_name)
             bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
@@ -869,7 +870,7 @@ class Alimama:
 
         return r_url
 
-    def get_order(self, bot, msg, times, orderId, userInfo, puid):
+    def get_order(self, bot, msg, times, orderId, userInfo, puid, raw):
 
         timestr = re.sub('-', '', times)
         order_id = int(orderId)
@@ -921,7 +922,7 @@ class Alimama:
 
             for item in res_dict['data']['paymentList']:
                 if int(order_id) == int(item['taobaoTradeParentId']):
-                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid)
+                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
                     return res
 
             user_text = '''
@@ -944,7 +945,7 @@ class Alimama:
             self.logger.debug(e)
             return {"info":"feild"}
 
-    def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid):
+    def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
         try:
             cm = ConnectMysql()
 
@@ -1016,7 +1017,30 @@ class Alimama:
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
 
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        self.logger.debug(new_remark_name)
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
                     cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')")
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+                    
+                    split_arr2 = raw.sender.remark_name.split('_')
+                
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
@@ -1085,7 +1109,30 @@ class Alimama:
                         total_rebate_amount) + "', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='" + str(time.time()) + "' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
 
 
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        self.logger.debug(new_remark_name)
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
                     cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name+"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '2', '"+puid+"', '"+bot.self.puid+"')")
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+                    
+                    split_arr2 = raw.sender.remark_name.split('_')
+                
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
@@ -1154,13 +1201,6 @@ class Alimama:
             except Exception as e:
                 self.logger.debug(e)
                 return e
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     al = Alimama()

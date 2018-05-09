@@ -73,7 +73,6 @@ def auto_accept_friends(msg):
         lnivt_user = bot.friends().search(sourcname)[0]
         sourc = lnivt_user.puid
 
-    mu.debug(msg)
     ort.create_user_info(msg, bot, msg.raw, lnivt_code=sourc, tool=True, wxid=user_wxid, sourcname=sourcname)
     text = '''
 一一一一 系统消息 一一一一

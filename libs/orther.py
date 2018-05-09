@@ -30,10 +30,10 @@ class Orther(object):
 
 
         is_ext = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+wxid+"' AND bot_puid='"+ bot.self.puid +"'")
-        logger.debug(is_ext)
+        
         if is_ext != ():
             return
-        logger.debug(res)
+        
         if lnivt_code == 0:
             sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" +wxid + "', '" + str(res['Sex']) + "', '" + res['RemarkName'] + "', '" + wxid + "', '0.3', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ bot.self.puid +"', '"+ res['RemarkName'] +"');"
             cm.ExecNonQuery(sql)
@@ -142,7 +142,7 @@ class Orther(object):
             # 获取机器人好友个数, 为序号
             f_len = len(bot.friends())
 
-            remarkName = '%s%s%s%s%s%s' % (year, month, day, f_len, 'A', 0)
+            remarkName = '%s%s%s%s%s%s%s%s%s' % (year, month, day, '_', f_len, '_', 'A', '_', 0)
 
             return remarkName
         except Exception as e:
