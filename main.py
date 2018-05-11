@@ -17,7 +17,7 @@ from libs import orther
 
 config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")
-if config.get('SYS', 'showimage') == no:
+if config.get('SYS', 'showimage') == 'no':
     # 初始化机器人，扫码登陆
     bot = Bot(cache_path='peng.pkl', console_qr=True)
 else:
