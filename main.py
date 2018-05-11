@@ -19,7 +19,7 @@ config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")
 if config.get('SYS', 'showimage') == 'no':
     # 初始化机器人，扫码登陆
-    bot = Bot(cache_path='peng.pkl', console_qr=True)
+    bot = Bot(cache_path='peng.pkl', console_qr=1)
 else:
     bot = Bot(cache_path='peng.pkl')
 bot.enable_puid('wxpy_puid.pkl')
