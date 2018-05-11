@@ -43,12 +43,14 @@ def taojin_init():
 # 消息回复(文本类型和分享类型消息)
 @bot.register()
 def text(msg):
+    print(msg)
     res = wb.check_if_is_tb_link(msg.raw, bot, msg)
     msg.reply(res)
 
 # 消息回复(文本类型和分享类型消息) 群聊
 @bot.register(Group)
 def group_text(msg):
+    print(msg)
     res = wb.check_if_is_group(msg.raw, bot, msg)
     msg.reply(res)
 
