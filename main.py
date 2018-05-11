@@ -28,6 +28,7 @@ wb = wx_bot.tbAndJd(bot)
 ort = orther.Orther()
 
 def taojin_init():
+    # 根据参数，开启对应的服务
     if config.get('SYS', 'gm') == 'yes':
        fm.groupMessages(bot)
 
@@ -36,6 +37,7 @@ def taojin_init():
         mj.login()
 
     if config.get('SYS', 'tb') == 'yes':
+        print('tb...start....')
         al.login()
 
 # 消息回复(文本类型和分享类型消息)

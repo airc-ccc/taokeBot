@@ -7,6 +7,7 @@ from threading import Thread
 import json
 import platform
 import datetime
+import traceback
 import re
 import os
 import configparser
@@ -18,24 +19,30 @@ from libs.mysql import ConnectMysql
 from libs.orther import Orther
 from libs.tuling import tuling
 
-logger = my_utils.init_logger()
 
 cookie_fname = 'cookies_jd.txt'
 sysstr = platform.system()
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
-ort = Orther()
-tu = tuling()
 
 class MediaJd:
     def __init__(self, bot):
         if config.get('SYS', 'jd') == 'yes':
             self.se = requests.session()
+            self.start_keep_cookie_thread()
             self.load_cookies()
-            self.logger = logger
+            self.ort = Orther()
+            self.tu = tuling()
+            self.logger = my_utils.init_logger()
 
     def start_keep_get_order(self, bot):
         t = Thread(target=self.getOrderInfo, args=(bot,))
+        t.setDaemon(True)
+        t.start()
+
+    # 启动一个线程，定时访问京东主页，防止cookie失效
+    def start_keep_cookie_thread(self):
+        t = Thread(target=self.visit_main_url, args=())
         t.setDaemon(True)
         t.start()
 
@@ -48,78 +55,103 @@ class MediaJd:
             return text
 
         cm = ConnectMysql()
+        try:
+            # 用户第一次查询，修改备注
+            query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+bot.self.puid+"'")
+            if query_good == ():
 
-        # 用户第一次查询，修改备注
-        query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+bot.self.puid+"'")
-        if query_good == ():
+                split_arr = raw.sender.remark_name.split('_')
+                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
+                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-            split_arr = raw.sender.remark_name.split('_')
-            new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-            logger.debug(new_remark_name)
-            bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
-            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+            print('开始查询分享商品的信息......'+msg['Text'])
 
-        print('开始查询分享商品的信息......'+msg['Text'])
+            bot_puid = bot.self.puid
 
-        bot_puid = bot.self.puid
+            sku_arr = good_url.split('https://item.m.jd.com/product/')
 
-        sku_arr = good_url.split('https://item.m.jd.com/product/')
+            if sku_arr == None:
+                if config.get('SYS', 'tl') == 'yes':
+                    msg_text = tu.tuling(msg)
+                    return msg_text
+                else:
+                    return
 
-        if sku_arr == None:
-            msg_text = tu.tuling(msg)
-            return msg_text
+            sku = sku_arr[1].split('.')
+            res = self.get_good_link(sku[0])
+            if res['data']['shotCouponUrl'] == '':
+                text = '''
+    一一一一返利信息一一一一
 
-        sku = sku_arr[1].split('.')
-        res = self.get_good_link(sku[0])
-        self.logger.debug(res)
-        if res['data']['shotCouponUrl'] == '':
+    【商品名】%s
+
+    【京东价】%s元
+    【返红包】%s元
+     返利链接:%s
+
+    省钱步骤：
+    1,点击链接，进入下单！
+    2,订单完成后，将订单完成日期和订单号发给我哦！
+    例如：
+    2018-01-01,12345678901
+                    ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                cm.ExecNonQuery(insert_sql)
+                return text
+            else:
+                text = '''
+    一一一一返利信息一一一一
+
+    【商品名】%s
+
+    【京东价】%s元
+    【优惠券】%s元
+    【券后价】%s元
+    【返红包】%s元
+     领券链接:%s
+
+    省钱步骤：
+    1,点击链接领取优惠券，正常下单购买！
+    2,订单完成后，将订单完成日期和订单号发给我哦！
+    例如：
+    2018-01-01,12345678901
+                    ''' % (
+                res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
+                res['data']['shotCouponUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                cm.ExecNonQuery(insert_sql)
+
+                return text
+        except Exception as e:
             text = '''
-一一一一返利信息一一一一
+一一一一 返利信息 一一一一
 
-【商品名】%s
+返利失败，该商品暂无优惠券信息！
 
-【京东价】%s元
-【返红包】%s元
- 返利链接:%s
+分享【京东商品链接】或者【淘口令】
+精准查询商品优惠券和返利信息
 
-省钱步骤：
-1,点击链接，进入下单！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
-                ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
-
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
-            cm.ExecNonQuery(insert_sql)
+优惠券使用教程：
+'''+config.get('URL', 'course')+'''
+跑堂优惠券常见问题：
+'''+config.get('URL', 'faq')+'''
+免费看电影方法：
+'''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
+                            '''
             return text
-        else:
-            text = '''
-一一一一返利信息一一一一
 
-【商品名】%s
-
-【京东价】%s元
-【优惠券】%s元
-【券后价】%s元
-【返红包】%s元
- 领券链接:%s
-
-省钱步骤：
-1,点击链接领取优惠券，正常下单购买！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
-                ''' % (
-            res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
-            res['data']['shotCouponUrl'])
-
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
-            cm.ExecNonQuery(insert_sql)
-
-            return text
 
     def getGroupJd(self, bot, msg, good_url, raw):
         if config.get('SYS', 'jd') == 'no':
@@ -129,52 +161,93 @@ class MediaJd:
                     '''
             return text
         cm = ConnectMysql()
-        wei_info = bot.core.search_chatrooms(userName=msg['FromUserName'])
-        puid = raw.member.puid
-        bot_puid = bot.self.puid
-        sku_arr = good_url.split('https://item.m.jd.com/product/')
-        if sku_arr == None:
-            msg_text = tu.tuling(msg)
-            return msg_text
+        try:
+            wei_info = bot.core.search_chatrooms(userName=msg['FromUserName'])
+            puid = raw.member.puid
+            bot_puid = bot.self.puid
+            sku_arr = good_url.split('https://item.m.jd.com/product/')
+            if sku_arr == None:
+                return
 
-        sku = sku_arr[1].split('.')
-        res = self.get_good_link(sku[0])
-        if res['data']['shotCouponUrl'] == '':
+            sku = sku_arr[1].split('.')
+            res = self.get_good_link(sku[0])
+            if res['data']['shotCouponUrl'] == '':
+                text = '''
+    一一一一返利信息一一一一
+
+    【商品名】%s
+
+    【京东价】%s元
+     返利链接:%s
+                    ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
+                                 'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                cm.ExecNonQuery(insert_sql)
+                return text
+            else:
+                text = '''
+    一一一一返利信息一一一一
+
+    【商品名】%s
+
+    【京东价】%s元
+    【优惠券】%s元
+    【券后价】%s元
+     领券链接:%s
+                    ''' % (
+                res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
+                res['data']['shotCouponUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
+                             msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                cm.ExecNonQuery(insert_sql)
+                return text
+        except Exception as e:
             text = '''
-一一一一返利信息一一一一
+一一一一 返利信息 一一一一
 
-【商品名】%s
+返利失败，该商品暂无优惠券信息！
 
-【京东价】%s元
- 返利链接:%s
-                ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
+分享【京东商品链接】或者【淘口令】
+精准查询商品优惠券和返利信息
 
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
-                             'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
-            cm.ExecNonQuery(insert_sql)
-            self.logger.debug(res['skuid'])
+优惠券使用教程：
+'''+config.get('URL', 'course')+'''
+跑堂优惠券常见问题：
+'''+config.get('URL', 'faq')+'''
+免费看电影方法：
+'''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
+                            '''
             return text
-        else:
-            text = '''
-一一一一返利信息一一一一
 
-【商品名】%s
-
-【京东价】%s元
-【优惠券】%s元
-【券后价】%s元
- 领券链接:%s
-                ''' % (
-            res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
-            res['data']['shotCouponUrl'])
-
-            insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                         res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
-                         msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
-            cm.ExecNonQuery(insert_sql)
-            self.logger.debug(res['skuid'])
-            return text
+    def visit_main_url(self):
+        self.load_cookies()
+        url = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=10960504678&input_keyword=10960504678&price=PC"
+        while True:
+            time.sleep(60 * 3)
+            try:
+                print("京东 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                # 搜索商品
+                res = self.se.get(url)
+                # 使用BeautifulSoup解析HTML，并提取属性数据
+                soup = BeautifulSoup(res.text, 'lxml')
+                a = soup.select('.extension-btn')
+                if not len(a):
+                    print('京东登录失效 正在重新登录京东')
+                    self.login()
+            except Exception as e:
+                self.login()
+                trace = traceback.format_exc()
+                print("error:{},trace:{}  京东登录失效 正在重新登录京东".format(str(e), trace))
 
     def check_login(self):
 
@@ -247,87 +320,91 @@ class MediaJd:
 
     def get_good_link(self, good_name):
         self.load_cookies()
-        uu = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=" + good_name + "&input_keyword=" + good_name + "&price=PC"
-        # 搜索商品
-        res = self.se.get(uu)
-        # 使用BeautifulSoup解析HTML，并提取属性数据
-        soup = BeautifulSoup(res.text, 'lxml')
-        a = soup.select('.extension-btn')
-        coupon = soup.find(attrs={'style':'color: #ff5400;'})
-        coupon_price = 0;
-        if coupon != None:
-            coupon_text = coupon.string
-            coupon_price = coupon_text.split('减')[1]
+        try:
+            uu = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=" + good_name + "&input_keyword=" + good_name + "&price=PC"
+            # 搜索商品
+            res = self.se.get(uu)
+            # 使用BeautifulSoup解析HTML，并提取属性数据
+            soup = BeautifulSoup(res.text, 'lxml')
+            a = soup.select('.extension-btn')
+            coupon = soup.find(attrs={'style':'color: #ff5400;'})
+            coupon_price = 0;
+            if coupon != None:
+                coupon_text = coupon.string
+                coupon_price = coupon_text.split('减')[1]
 
-        request_id = soup.select('#requestId')
+            request_id = soup.select('#requestId')
 
-        str_onclick = a[0].get('onclick')
+            str_onclick = a[0].get('onclick')
 
-        string = str_onclick[13:-8]
+            string = str_onclick[13:-8]
 
-        arr = string.split(',')
+            arr = string.split(',')
 
-        dict_str = {}
+            dict_str = {}
 
-        for item in arr:
-            str = item.split('\':')
-            str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
-            str_1 = str_b[1].strip()
-            str_2 = str_1.split('\'')
-            str_3 = str[1].split('\'')
+            for item in arr:
+                str = item.split('\':')
+                str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
+                str_1 = str_b[1].strip()
+                str_2 = str_1.split('\'')
+                str_3 = str[1].split('\'')
 
-            if len(str_3) >= 2:
-                dict_str[str_2[1]] = str_3[1]
+                if len(str_3) >= 2:
+                    dict_str[str_2[1]] = str_3[1]
+                else:
+                    dict_str[str_2[1]] = str_3[0]
+
+            # 拼装FormData
+            dict_str['adtType'] = 31
+            dict_str['siteName'] = -1
+            dict_str['unionWebId'] = -1
+            dict_str['protocol'] = 1
+            dict_str['codeType'] = 2
+            dict_str['type'] = 1
+            dict_str['positionId'] = 1194027498
+            dict_str['positionName'] = '京推推推广位'
+            dict_str['sizeId'] = -1
+            dict_str['logSizeName'] = -1
+            dict_str['unionAppId'] = -1
+            dict_str['unionMediaId'] = -1
+            dict_str['materialType'] = 1
+            dict_str['orienPlanId'] = -1
+            dict_str['landingPageType'] = -1
+            dict_str['adOwner'] = 'z_0'
+            dict_str['saler'] = -1
+            dict_str['isApp'] = -1
+            dict_str['actId'] = dict_str['materialId']
+            dict_str['wareUrl'] = dict_str['pcDetails']
+            dict_str['category'] = dict_str['logCategory']
+            dict_str['requestId'] = request_id[0].get('value')
+
+            # 删除多余的属性
+            dict_str.pop('logCategory')
+            dict_str.pop('pcDetails')
+            dict_str.pop('mDetails')
+
+            # 获取领券链接和下单链接
+            good_link = self.se.post('https://media.jd.com/gotoadv/getCustomCodeURL', data=dict_str)
+
+            good_text = json.loads(good_link.text)
+            good_text['logTitle'] = dict_str['logTitle']
+            good_text['logUnitPrice'] = dict_str['logUnitPrice']
+            good_text['imgUrl'] = dict_str['imgUrl']
+            rebate = float(dict_str['pcComm']) / 100
+            if coupon != None:
+                good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
+                good_text['youhuiquan_price'] = coupon_price
+                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
             else:
-                dict_str[str_2[1]] = str_3[0]
+                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
 
-        # 拼装FormData
-        dict_str['adtType'] = 31
-        dict_str['siteName'] = -1
-        dict_str['unionWebId'] = -1
-        dict_str['protocol'] = 1
-        dict_str['codeType'] = 2
-        dict_str['type'] = 1
-        dict_str['positionId'] = 1194027498
-        dict_str['positionName'] = '京推推推广位'
-        dict_str['sizeId'] = -1
-        dict_str['logSizeName'] = -1
-        dict_str['unionAppId'] = -1
-        dict_str['unionMediaId'] = -1
-        dict_str['materialType'] = 1
-        dict_str['orienPlanId'] = -1
-        dict_str['landingPageType'] = -1
-        dict_str['adOwner'] = 'z_0'
-        dict_str['saler'] = -1
-        dict_str['isApp'] = -1
-        dict_str['actId'] = dict_str['materialId']
-        dict_str['wareUrl'] = dict_str['pcDetails']
-        dict_str['category'] = dict_str['logCategory']
-        dict_str['requestId'] = request_id[0].get('value')
+            good_text['coupon_price2'] = coupon_price
+            return good_text
+        except Exception as e:
+            self.logger.debug(e)
 
-        # 删除多余的属性
-        dict_str.pop('logCategory')
-        dict_str.pop('pcDetails')
-        dict_str.pop('mDetails')
 
-        # 获取领券链接和下单链接
-        good_link = self.se.post('https://media.jd.com/gotoadv/getCustomCodeURL', data=dict_str)
-
-        good_text = json.loads(good_link.text)
-        good_text['logTitle'] = dict_str['logTitle']
-        good_text['logUnitPrice'] = dict_str['logUnitPrice']
-        good_text['imgUrl'] = dict_str['imgUrl']
-        rebate = float(dict_str['pcComm']) / 100
-        if coupon != None:
-            good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
-            good_text['youhuiquan_price'] = coupon_price
-            good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
-        else:
-            good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
-
-        good_text['coupon_price2'] = coupon_price
-        return good_text
-        
     # 随机获取商品信息
     def get_good_info(self, bot):
         cm = ConnectMysql()
@@ -519,7 +596,6 @@ class MediaJd:
                 if order_num == ():
                     split_arr = raw.sender.remark_name.split('_')
                     new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
-                    self.logger.debug(new_remark_name)
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                     cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
@@ -529,9 +605,9 @@ class MediaJd:
 
                 # 累计订单数量
                 order_nums = cm.ExecQuery(select_order_num)
-            
+
                 split_arr2 = raw.sender.remark_name.split('_')
-                
+
                 new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                 bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -606,9 +682,9 @@ class MediaJd:
                 jd_order_num = int(check_user_res[0][12]) + 1
 
                 up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid=" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
-                
+
                 cm.ExecNonQuery(up_sql)
-                
+
                 select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
                 # 订单已完成，修改备注
                 order_num = cm.ExecQuery(select_order_num)
@@ -616,7 +692,6 @@ class MediaJd:
                 if order_num == ():
                     split_arr = raw.sender.remark_name.split('_')
                     new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
-                    self.logger.debug(new_remark_name)
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                     cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
@@ -625,9 +700,9 @@ class MediaJd:
 
                 # 累计订单数量
                 order_nums = cm.ExecQuery(select_order_num)
-                
+
                 split_arr2 = raw.sender.remark_name.split('_')
-                
+
                 new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                 bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -683,8 +758,3 @@ class MediaJd:
             #         insert_sql = "INSERT INTO taojin_order_info(bot_puid, skuid, order_id, type, create_time) VALUES('"+bot.self.puid+"', '"+ item['skuList'][] +"')"
 
             self.logger.debug(rj)
-
-
-
-
-

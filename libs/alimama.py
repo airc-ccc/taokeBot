@@ -9,29 +9,23 @@ import sys
 import time
 import traceback
 import datetime
-
 if sys.version_info[0] < 3:
     import urllib
 else:
     import urllib.parse as urllib
-    
 from io import BytesIO
+import pyqrcode
+import requests
+from PIL import Image
 from threading import Thread
 from dateutil.relativedelta import relativedelta
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
 from selenium import webdriver
 
-import pyqrcode
-import requests
-
-from PIL import Image
-
 cookie_fname = 'cookies_taobao.txt'
 config = configparser.ConfigParser()
 config.read('config.conf',encoding="utf-8-sig")
-
-ort = Orther()
 
 class Alimama:
     def __init__(self, logger, bot):
@@ -41,6 +35,7 @@ class Alimama:
             self.myip = "127.0.0.1"
             self.start_keep_cookie_thread()
             self.logger = logger
+            self.ort = Orther()
 
     def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
@@ -298,13 +293,11 @@ class Alimama:
         while True:
             time.sleep(60 * 5)
             try:
-                self.logger.debug("visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                print("淘宝 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 self.get_url(url, headers)
-                # self.logger.debug(self.check_login())
                 real_url = "https://detail.tmall.com/item.htm?id=42485910384"
                 res = self.get_detail2(real_url)
                 auctionid = res['auctionId']
-                # self.logger.debug(self.get_tk_link(auctionid))
             except Exception as e:
                 trace = traceback.format_exc()
                 self.logger.warning("error:{},trace:{}".format(str(e), trace))
@@ -364,7 +357,6 @@ class Alimama:
 
     # check login
     def check_login(self):
-        # self.logger.debug('checking login status.....')
         url = 'https://pub.alimama.com/common/getUnionPubContextInfo.json'
         headers = {
             'method': 'GET',
@@ -422,7 +414,7 @@ class Alimama:
         self.logger.debug('begin to show qr image')
         url = 'https://qrlogin.taobao.com/qrcodelogin/generateQRCode4Login.do?from=alimama&_ksTS=%s_30&callback=jsonp31' % int(
             time.time() * 1000)
-        
+
         # get qr image
         headers = {
             'method': 'GET',
@@ -455,13 +447,13 @@ class Alimama:
         res = self.get_url(url, headers=headers)
         qrimg = BytesIO(res.content)
         self.logger.debug(u"begin qr")
-        
+
         sysstr = platform.system()
         if (sysstr == "Windows"):
             # windows下可能无法打印请用下列代码
             img = Image.open(qrimg)
             img.show()
-        
+
         elif (sysstr == "Linux") or (sysstr == "Darwin"):
             # 读取url
             import zbarlight
@@ -550,7 +542,7 @@ class Alimama:
                     return 'login success'
         except Exception as e:
             trace = traceback.format_exc()
-            self.logger.warning("{},{}".format(str(e), trace))
+            print("{},{}".format(str(e), trace))
             return 'login failed'
 
     def open_do_login(self):
@@ -591,7 +583,7 @@ class Alimama:
             cookies_arr = []
             for item in wd.get_cookies():
                 cookies_arr.append([item['name'], item['value']])
-            
+
             f.write(json.dumps(cookies_arr))
         return 'login success'
 
@@ -618,10 +610,9 @@ class Alimama:
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
         if query_good == ():
-            
+
             split_arr = raw.sender.remark_name.split('_')
             new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-            self.logger.debug(new_remark_name)
             bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
             # 修改数据库
@@ -811,7 +802,6 @@ class Alimama:
                     self.logger.debug("{},{},{},{}".format(res2.url, res2.status_code, res2.history, res2.text))
                     r_url = res2.url
 
-            # self.logger.debug(r_url)
             return r_url
         except Exception as e:
             self.logger.warning(str(e))
@@ -918,7 +908,6 @@ class Alimama:
             res = self.get_url(url, headers)
 
             res_dict = json.loads(res.text)
-            self.logger.debug(res_dict, url)
 
             for item in res_dict['data']['paymentList']:
                 if int(order_id) == int(item['taobaoTradeParentId']):
@@ -1024,7 +1013,6 @@ class Alimama:
                     if order_num == ():
                         split_arr = raw.sender.remark_name.split('_')
                         new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
-                        self.logger.debug(new_remark_name)
                         bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                         cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
@@ -1033,9 +1021,9 @@ class Alimama:
 
                     # 累计订单数量
                     order_nums = cm.ExecQuery(select_order_num)
-                    
+
                     split_arr2 = raw.sender.remark_name.split('_')
-                
+
                     new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -1055,7 +1043,7 @@ class Alimama:
 
                     # 写入返利日志
                     cm.InsertRebateLog(args)
-                    parent_puid = ort.getPuid(bot, get_parent_info[0][4])
+                    parent_puid = self.ort.getPuid(bot, get_parent_info[0][4])
                     args2 = {
                         'wx_bot': bot.self.nick_name,
                         'bot_puid': bot.self.puid,
@@ -1125,9 +1113,9 @@ class Alimama:
 
                     # 累计订单数量
                     order_nums = cm.ExecQuery(select_order_num)
-                    
+
                     split_arr2 = raw.sender.remark_name.split('_')
-                
+
                     new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -1160,7 +1148,7 @@ class Alimama:
                     cm.Close()
                     return {'user_text': user_text, 'info': 'not_parent_and_success'}
         except Exception as e:
-            self.logger.debug(e)
+            self.logger(e)
             return {'info': 'feild'}
 
     # 定时获取淘宝订单信息
@@ -1196,8 +1184,6 @@ class Alimama:
                 res = self.get_url(url, headers)
                 # 格式转化一下
                 res_dict = json.loads(res.text)
-
-                self.logger.debug(res_dict)
             except Exception as e:
                 self.logger.debug(e)
                 return e

@@ -10,8 +10,7 @@ config.read('config.conf',encoding="utf-8-sig")
 
 class SharMovie(object):
     def __init__(self):
-        long = "https://media.jd.com/gotoadv/goods?searchId=2011016742%23%23%23st1%23%23%23kt1%23%23%23598e10defb7f41debe6af038e875b61c&pageIndex=&pageSize=50&property=&sort=&goodsView=&adownerType=&pcRate=&wlRate=&category1=&category=&category3=&condition=0&fromPrice=&toPrice=&dataFlag=0&keyword=%E9%9E%8B%E5%AD%90&input_keyword=%E9%9E%8B%E5%AD%90&price=PC"
-        self.getShortUrl(long)
+        pass
 
     def getMovie(self, msg):
         soup_xml = BeautifulSoup(msg['Content'], 'lxml')
@@ -22,10 +21,12 @@ class SharMovie(object):
         for item in shipin:
             if item == xml_info[0].string:
                 player_url = config.get('URL', 'movieurl')+'%s' % msg['Url']
+
+                res = self.getShortUrl(player_url)
                 text = '''
 一一一一 视频信息 一一一一
 
-播放链接：'''+player_url+'''
+播放链接：'''+res+'''
 
 分享【京东商品链接】或者【淘口令】
 精准查询商品优惠券和返利信息！
@@ -66,10 +67,13 @@ class SharMovie(object):
                         '''
                 return text
 
+    # 短链接转换接口
     def getShortUrl(self, longUrl):
 
         url = "http://47.98.244.9/long2short/long2short.php?longurl="+longUrl+""
 
         res = requests.get(url)
 
-        return json.lods(res)['short_url']
+        rj = json.loads(res.text)
+        print(rj)
+        return rj['short_url']

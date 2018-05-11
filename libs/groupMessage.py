@@ -25,7 +25,6 @@ class FormData:
         def wrapper(*args, **kwargs):
             thr = Thread(target=f, args=args, kwargs=kwargs)
             thr.start()
-
         return wrapper
 
     # 获取群
@@ -37,7 +36,7 @@ class FormData:
             self.start_send_msg_thread()
             return
 
-        print('start.....')
+        print('start select groups.....')
         cm = ConnectMysql()
 
         select_sql = "DELETE FROM taojin_group_message WHERE bot_puid='" + bot.self.puid + "';"

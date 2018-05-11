@@ -10,6 +10,7 @@ from libs import mediaJd
 from libs import alimama
 from libs import my_utils
 from libs import tuling
+from libs import movie
 
 
 config = configparser.ConfigParser()
@@ -22,6 +23,7 @@ class TextMessage:
         self.logger = my_utils.init_logger()
         self.al = alimama.Alimama(self.logger, bot)
         self.ort = Orther()
+        self.movie = movie.SharMovie()
 
     def is_valid_date(self, str):
         try:
@@ -57,12 +59,15 @@ class TextMessage:
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
                 tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+
+                res1 = self.movie.getShortUrl(jdurl)
+                res2 = self.movie.getShortUrl(tburl)
                 text = '''
 一一一一系统消息一一一一
 亲，以为您找到所有【%s】优惠券,
 快快点击领取吧！
 京东：%s淘宝：%s
-                ''' % (msg['Text'][1:], jdurl, tburl)
+                ''' % (msg['Text'][1:], res1, res2)
                 return text
             elif appect_friend.search(msg['Text']) != None:
                 # 获取生成的备注
@@ -326,7 +331,7 @@ class TextMessage:
 【4】订单完成日期错误，请输入正确的订单查询日期
 【6】订单号错误，请输入正确的订单号
 
-请按照提示进行重新操作！            
+请按照提示进行重新操作！
                                         '''
                     return user_text
             elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
@@ -362,7 +367,7 @@ class TextMessage:
 【4】订单完成日期错误，请输入正确的订单查询日期
 【6】订单号错误，请输入正确的订单号
 
-请按照提示进行重新操作！            
+请按照提示进行重新操作！
                                         '''
                     return user_text
             elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
@@ -397,7 +402,7 @@ class TextMessage:
 【4】订单完成日期错误，请输入正确的订单查询日期
 【6】订单号错误，请输入正确的订单号
 
-请按照提示进行重新操作！            
+请按照提示进行重新操作！
                                         '''
 
                     return user_text
@@ -433,7 +438,7 @@ class TextMessage:
 【4】订单完成日期错误，请输入正确的订单查询日期
 【6】订单号错误，请输入正确的订单号
 
-请按照提示进行重新操作！            
+请按照提示进行重新操作！
                                         '''
 
                     return user_text
@@ -466,9 +471,12 @@ class TextMessage:
                                         '''
                 return user_text
             else:
-                msg_text = self.tu.tuling(msg)
-                self.logger.debug(msg_text)
-                return msg_text
+                if config.get('SYS', 'tl') == 'yes':
+                    msg_text = self.tu.tuling(msg)
+                    self.logger.debug(msg_text)
+                    return msg_text
+                else:
+                    return
         else:
             res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
@@ -496,14 +504,15 @@ class TextMessage:
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
                 tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+                res1 = self.movie.getShortUrl(jdurl)
+                res2 = self.movie.getShortUrl(tburl)
                 text = '''
 一一一一系统消息一一一一
-
-亲，以为您找到所有【%s】优惠券,快快点击领取吧！
-
+亲，以为您找到所有【%s】优惠券,
+快快点击领取吧！
 京东：%s
 淘宝：%s
-                        ''' % (msg['Text'][1:], jdurl, tburl)
+                                ''' % (msg['Text'][1:], res1, res2)
                 return text
             elif pattern_bz.search(msg['Text']) != None:
                 # 帮助操作
