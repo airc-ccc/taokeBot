@@ -1,6 +1,7 @@
 # -*-coding: UTF-8-*-
 
 import time
+import traceback
 import re
 import configparser
 from urllib.parse import quote
@@ -168,55 +169,49 @@ class TextMessage:
                 if res['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
+                print(config.get('ADMIN', 'ADMIN_USER'))
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
-                try:
-                    select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
-                    select_user_res = cm.ExecQuery(select_user_sql)
-                    if float(select_user_res[0][9]) > 0:
-                        # try:
-                        # 修改余额
-                        update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0',update_time='" + str(time.time()) + "' WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
+                # try:
+                select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid+"';"
+                select_user_res = cm.ExecQuery(select_user_sql)
+                timestr = round(time.time())
+                timestr2 = repr(timestr)
+                if float(select_user_res[0][9]) > 0:
+                    # 修改余额
+                    update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0', update_time='"+ timestr2 +"' WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+ bot.self.puid +"';"
+                    print(update_sql)
+                    total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
+                    update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + repr(total_amount) + "',update_time='" + timestr2 + "' WHERE puid='"+raw.sender.puid +"' AND bot_puid='"+ bot.self.puid +"';"
+                    # 插入提现日志
+                    insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + repr(select_user_res[0][9]) + "', '" + timestr2 + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
+                    print(insert_current_log_sql)
+                    to_admin_text = '''
+一一一一 提现通知 一一一一
 
-                        total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
-                        update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + str(total_amount) + "',update_time='" + str(time.time()) + "' WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
+机器人：%s
+提现人：%s
+提现金额：%s 元
+提现时间：%s
+                                        ''' % (
+                    bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-                        # 插入提现日志
-                        insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + str(select_user_res[0][9]) + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
+                    cm.ExecNonQuery(update_sql)
+                    cm.ExecNonQuery(update_total_sql)
+                    cm.ExecNonQuery(insert_current_log_sql)
 
-                        to_admin_text = '''
-    一一一一 提现通知 一一一一
+                    to_user_text = '''
+一一一一 提现信息 一一一一
 
-    机器人：%s
-    提现人：%s
-    提现金额：%s 元
-    提现时间：%s
-                                                ''' % (
-                        bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
-                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+提现成功！
+提现金额将以微信红包的形式发放，请耐心等待！
 
-                        cm.ExecNonQuery(update_sql)
-                        cm.ExecNonQuery(update_total_sql)
-                        cm.ExecNonQuery(insert_current_log_sql)
-
-                        to_user_text = '''
-    一一一一 提现信息 一一一一
-
-    提现成功！
-    提现金额将以微信红包的形式发放，请耐心等待！
-
-    分享【京东商品链接】或者【淘口令】
-    精准查询商品优惠券和返利信息！
-                                        '''
-                        adminuser.send(to_admin_text)
-                        return to_user_text
-                except Exception as e:
-                    text1 = '''
-一一一一 系统信息 一一一一
-
-提现失败，请稍后重试！
-                            '''
-                    self.logger.debug(e)
-                    return text1
+分享【京东商品链接】或者【淘口令】
+精准查询商品优惠券和返利信息！
+                                    '''
+                    print(to_user_text)
+                    adminuser.send(to_admin_text)
+                    return to_user_text
                 else:
                     text2 = '''
 一一一一 提现信息 一一一一
@@ -224,6 +219,15 @@ class TextMessage:
 提现申请失败，账户余额为0！
                                     '''
                     return text2
+                # except Exception as e:
+                #     trace = traceback.format_exc()
+                #     print("error:{},trace:{}  京东登录失效 正在重新登录京东".format(str(e), trace))
+                #     text1 = '''
+# 一一一一 系统信息 一一一一
+#
+# 提现失败，请稍后重试！
+#                             '''
+#                     return text1
             elif pattern_profile.search(msg['Text']) != None:
                 cm = ConnectMysql()
                 res = self.ort.ishaveuserinfo(bot, msg, raw)
