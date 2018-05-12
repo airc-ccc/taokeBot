@@ -6,6 +6,7 @@
 
 # 导入模块
 import configparser
+import time
 from bs4 import BeautifulSoup
 from wxpy import *
 from libs import my_utils
@@ -14,6 +15,7 @@ from libs import alimama
 from libs import groupMessage
 from libs import wx_bot
 from libs import orther
+from libs import mysql
 
 config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")
@@ -84,7 +86,7 @@ def auto_accept_friends(msg):
     text = '''
 一一一一 系统消息 一一一一
 
-账户创建成功！0.3元奖励金已发放！
+账户创建成功！%s元奖励金已发放！
 
 回复【个人信息】查看账户详情
 分享【京东商品链接】或者【淘口令】
@@ -96,7 +98,7 @@ def auto_accept_friends(msg):
 '''+config.get('URL', 'movie')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
-            '''
+            ''' % (config.get('BN', 'bn1'))
     new_friend.send(text)
 
 
