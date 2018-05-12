@@ -610,13 +610,20 @@ class Alimama:
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
         if query_good == ():
+            se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
+            if se.search(raw.sender.remark_name) == None:
+                remarkName = self.ort.generateRemarkName(bot)
+                split_arr2 = remarkName.split('_')
+                new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
+                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+            else:
+                split_arr = raw.sender.remark_name.split('_')
+                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
+                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-            split_arr = raw.sender.remark_name.split('_')
-            new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-            bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
-
-            # 修改数据库
-            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                # 修改数据库
+                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
         try:
             t = int(time.time() * 1000)
             tb_token = self.se.cookies.get('_tb_token_', domain="pub.alimama.com")

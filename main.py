@@ -6,6 +6,7 @@
 
 # 导入模块
 import configparser
+import time
 from bs4 import BeautifulSoup
 from wxpy import *
 from libs import my_utils
@@ -14,6 +15,7 @@ from libs import alimama
 from libs import groupMessage
 from libs import wx_bot
 from libs import orther
+from libs import mysql
 
 config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")

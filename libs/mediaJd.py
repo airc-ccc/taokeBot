@@ -59,12 +59,20 @@ class MediaJd:
             # 用户第一次查询，修改备注
             query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+bot.self.puid+"'")
             if query_good == ():
+                se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
+                if se.search(raw.sender.remark_name) == None:
+                    remarkName = self.ort.generateRemarkName(bot)
+                    print(remarkName)
+                    split_arr2 = remarkName.split('_')
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                else:
+                    split_arr = raw.sender.remark_name.split('_')
+                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-                split_arr = raw.sender.remark_name.split('_')
-                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
-
-                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
             print('开始查询分享商品的信息......'+msg['Text'])
 
@@ -81,6 +89,7 @@ class MediaJd:
 
             sku = sku_arr[1].split('.')
             res = self.get_good_link(sku[0])
+            
             if res['data']['shotCouponUrl'] == '':
                 text = '''
     一一一一返利信息一一一一
@@ -129,6 +138,8 @@ class MediaJd:
 
                 return text
         except Exception as e:
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
             text = '''
 一一一一 返利信息 一一一一
 
@@ -391,6 +402,7 @@ class MediaJd:
             good_text['logTitle'] = dict_str['logTitle']
             good_text['logUnitPrice'] = dict_str['logUnitPrice']
             good_text['imgUrl'] = dict_str['imgUrl']
+            good_text['skuid'] = dict_str['materialId']
             rebate = float(dict_str['pcComm']) / 100
             if coupon != None:
                 good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)

@@ -33,13 +33,15 @@ class Orther(object):
         # 查询用户是否存在
         is_ext = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+wxid+"' AND bot_puid='"+ bot.self.puid +"'")
 
+        print(res)
+
         # 如果数据不为空，return
         if is_ext != ():
             return
         # 判断是否有邀请人
         if lnivt_code == 0:
             # 没有邀请人，插入新用户
-            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" +wxid + "', '" + str(res['Sex']) + "', '" + res['RemarkName'] + "', '" + wxid + "', '0.3', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ bot.self.puid +"', '"+ res['RemarkName'] +"');"
+            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" +wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + wxid + "', '0.3', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ bot.self.puid +"', '"+ res['RemarkName'] +"');"
             cm.ExecNonQuery(sql)
             # 返利日志参数
             args = {
@@ -139,6 +141,7 @@ class Orther(object):
 
     # 生成备注名称
     def generateRemarkName(self, bot):
+        cm = ConnectMysql()
         try:
             remarkName = ''
             # 日期 + 序号 + 状态
@@ -146,8 +149,13 @@ class Orther(object):
             month = datetime.datetime.now().month # 月
             day = datetime.datetime.now().day # 日
 
-            # 获取机器人好友个数, 为序号
-            f_len = len(bot.friends())
+            # 获取数据库的用户个数 + 1, 为序号
+            res = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE bot_puid='"+ bot.self.puid +"'")
+
+            if res == None:
+                f_len = 1
+            else:
+                f_len = len(res) + 1
 
             remarkName = '%s%s%s%s%s%s%s%s%s' % (year, month, day, '_', f_len, '_', 'A', '_', 0)
 
