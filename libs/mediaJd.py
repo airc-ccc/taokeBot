@@ -89,7 +89,7 @@ class MediaJd:
 
             sku = sku_arr[1].split('.')
             res = self.get_good_link(sku[0])
-            
+
             if res['data']['shotCouponUrl'] == '':
                 text = '''
     一一一一返利信息一一一一
@@ -407,9 +407,9 @@ class MediaJd:
             if coupon != None:
                 good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
                 good_text['youhuiquan_price'] = coupon_price
-                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
+                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * float(config.get('BN', 'bn3')), 2)
             else:
-                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
+                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * float(config.get('BN', 'bn3')), 2)
 
             good_text['coupon_price2'] = coupon_price
             return good_text
@@ -571,7 +571,7 @@ class MediaJd:
                 get_parent_info = cm.ExecQuery(get_parent_sql)
 
                 # 计算返利金额
-                add_balance = round(float(info['skuList'][0]['actualFee']) * 0.3, 2)
+                add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3')), 2)
                 # 累加宗金额
                 withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                 # 计算京东返利金额
@@ -588,8 +588,8 @@ class MediaJd:
                 save_money = round(
                     check_user_res[0][10] + jishen, 2)
 
-                add_parent_balance = round(float(info['skuList'][0]['actualFee']) * 0.1, 2)
-                withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * 0.1, 2)
+                add_parent_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn4')), 2)
+                withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * float(config.get('BN', 'bn4')), 2)
 
                 # 订单数加1
                 # 总订单数加一
@@ -675,7 +675,7 @@ class MediaJd:
                 return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success',
                         'parent': get_parent_info[0][4]}
             else:
-                add_balance = round(float(info['skuList'][0]['actualFee']) * 0.3, 2)
+                add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3')), 2)
                 print(info, add_balance)
                 withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                 jd = round(float(check_user_res[0][7]) + add_balance, 2)

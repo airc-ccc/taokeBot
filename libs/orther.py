@@ -33,15 +33,13 @@ class Orther(object):
         # 查询用户是否存在
         is_ext = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+wxid+"' AND bot_puid='"+ bot.self.puid +"'")
 
-        print(res)
-
         # 如果数据不为空，return
         if is_ext != ():
             return
         # 判断是否有邀请人
         if lnivt_code == 0:
             # 没有邀请人，插入新用户
-            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" +wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + wxid + "', '0.3', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ bot.self.puid +"', '"+ res['RemarkName'] +"');"
+            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" +wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + wxid + "', '"+ config.get('BN', 'bn1') +"', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ bot.self.puid +"', '"+ res['RemarkName'] +"');"
             cm.ExecNonQuery(sql)
             # 返利日志参数
             args = {
@@ -49,7 +47,7 @@ class Orther(object):
                 'bot_puid': botself.puid,
                 'username': res['NickName'],
                 'puid': wxid,
-                'rebate_amount': 0.3,
+                'rebate_amount': config.get('BN', 'bn1'),
                 'type': 1,
                 'create_time': time.time()
             }
@@ -67,10 +65,10 @@ class Orther(object):
             lnivt_info = cm.ExecQuery(lnivter_sql)
 
             # 有邀请人时，插入用户信息，并奖励邀请人
-            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" + wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + str(wxid) + "', '0.3', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ botself.puid +"', '"+res['RemarkName']+"');"
+            sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" + wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + str(wxid) + "', '"+ config.get('BN', 'bn1') +"', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ botself.puid +"', '"+res['RemarkName']+"');"
 
-            # 给邀请人余额加0.3元奖励
-            jianli = round(float(lnivt_info[0][9]) + 0.3, 2)
+            # 给邀请人余额加上奖励
+            jianli = round(float(lnivt_info[0][9]) + float(config.get('BN', 'bn2')), 2)
 
             friends_num = int(lnivt_info[0][20]) + 1
 
@@ -86,7 +84,7 @@ class Orther(object):
                 'bot_puid': botself.puid,
                 'username': res['NickName'],
                 'puid': wxid,
-                'rebate_amount': 0.3,
+                'rebate_amount': config.get('BN', 'bn1'),
                 'type': 1,
                 'create_time': time.time()
             }
@@ -99,7 +97,7 @@ class Orther(object):
                 'bot_puid': botself.puid,
                 'username': lnivt_info[0][4],
                 'puid': parent_puid,
-                'rebate_amount': 0.3,
+                'rebate_amount': config.get('BN', 'bn2'),
                 'type': 2,
                 'create_time': time.time()
             }

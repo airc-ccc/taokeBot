@@ -96,7 +96,7 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * 0.3, 2)
+            fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
@@ -215,7 +215,7 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * 0.3, 2)
+            fx2 = round(float(res['tkCommonFee']) * float(config.get('BN', 'bn3')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
@@ -982,7 +982,7 @@ class Alimama:
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
                     # 计算返佣
-                    add_balance = round(float(info['feeString']) * 0.3, 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3')), 2)
                     # 累加余额
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     # 累加淘宝总返利
@@ -1003,12 +1003,12 @@ class Alimama:
                     taobao_order_num = int(check_user_res[0][13]) + 1
 
                     # 邀请人返利金额
-                    add_parent_balance = round(float(info['feeString']) * 0.1, 2)
+                    add_parent_balance = round(float(info['feeString']) * float(config.get('BN', 'bn4')), 2)
 
                     # 给邀请人好友返利加上金额
                     friends_rebatr = float(get_parent_info[0][19]) + float(add_balance)
                     # 邀请人总钱数加上返利金额
-                    withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * 0.1, 2)
+                    withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * float(config.get('BN', 'bn4')), 2)
 
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
@@ -1084,7 +1084,7 @@ class Alimama:
                     cm.Close()
                     return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success', 'parent': get_parent_info[0][4]}
                 else:
-                    add_balance = round(float(info['feeString']) * 0.3, 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3')), 2)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
