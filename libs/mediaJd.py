@@ -579,7 +579,7 @@ class MediaJd:
                 # 计算总返利金额
                 total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                jishen = round(float(get_query_info[0][3]) - float(info['skuList'][0]['payPrice']))
+                jishen = round(float(get_query_info[0][4]) - float(info['skuList'][0]['payPrice']))
 
                 if jishen < 0:
                     jishen = 0
@@ -681,7 +681,7 @@ class MediaJd:
                 jd = round(float(check_user_res[0][7]) + add_balance, 2)
                 total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                jishen = round(float(get_query_info[0][3]) - float(info['skuList'][0]['payPrice']))
+                jishen = round(float(get_query_info[0][4]) - float(info['skuList'][0]['payPrice']))
 
                 if jishen < 0:
                     jishen = 0

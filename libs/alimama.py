@@ -938,7 +938,9 @@ class Alimama:
 
             return {'info': 'not_order', 'user_text': user_text}
         except Exception as e:
-            self.logger.debug(e)
+            trace = traceback.format_exc()
+
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {"info":"feild"}
 
     def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
@@ -990,7 +992,7 @@ class Alimama:
                     # 累加总返利
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                    jishen = (float(get_query_info[0][3]) - float(info['realPayFeeString']))
+                    jishen = (float(get_query_info[0][4]) - float(info['realPayFeeString']))
 
                     if jishen < 0:
                         jishen = 0
@@ -1089,12 +1091,12 @@ class Alimama:
                     taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                    jishen = (float(get_query_info[0][3]) - float(info['realPayFeeString']))
+                    jishen = (float(get_query_info[0][4]) - float(info['realPayFeeString']))
 
                     if jishen < 0:
                         jishen = 0
 
-                    save_money = round(check_user_res[0][10] + (float(get_query_info[0][3]) - float(info['realPayFeeString'])) + add_balance, 2)
+                    save_money = round(check_user_res[0][10] + (float(get_query_info[0][4]) - float(info['realPayFeeString'])) + add_balance, 2)
                     total_order_num = int(check_user_res[0][11]) + 1
                     taobao_order_num = int(check_user_res[0][13]) + 1
 
@@ -1155,7 +1157,8 @@ class Alimama:
                     cm.Close()
                     return {'user_text': user_text, 'info': 'not_parent_and_success'}
         except Exception as e:
-            self.logger(e)
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {'info': 'feild'}
 
     # 定时获取淘宝订单信息
