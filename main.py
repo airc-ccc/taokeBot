@@ -62,6 +62,7 @@ def group_text(msg):
 # # 自动通过好友验证
 @bot.register(msg_types = FRIENDS)
 def auto_accept_friends(msg):
+    print(msg)
     # 通过好友验证
     new_friend = msg.card.accept()
     # 获取生成的备注
@@ -86,7 +87,7 @@ def auto_accept_friends(msg):
     text = '''
 一一一一 系统消息 一一一一
 
-账户创建成功！%s元奖励金已发放！
+'''+ config.get('BN', 'bn1') +'''元奖励金已发放到您的个人账户！
 
 回复【个人信息】查看账户详情
 分享【京东商品链接】或者【淘口令】
@@ -98,7 +99,8 @@ def auto_accept_friends(msg):
 '''+config.get('URL', 'movie')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
-            ''' % (config.get('BN', 'bn1'))
+            '''
+    print(new_friend)
     new_friend.send(text)
 
 
