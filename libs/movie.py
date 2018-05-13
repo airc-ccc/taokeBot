@@ -27,16 +27,6 @@ class SharMovie(object):
 一一一一 视频信息 一一一一
 
 播放链接：'''+res+'''
-
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
                         '''
                 return text
 
@@ -54,16 +44,6 @@ class SharMovie(object):
 一一一一 视频信息 一一一一
 
 播放链接：'''+res+'''
-
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
                         '''
                 return text
 

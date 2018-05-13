@@ -80,16 +80,31 @@ class TextMessage:
                 user_wxid = self.ort.getPuid(bot, msg['FromUserName'])
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-一一一一 系统消息 一一一一
+Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东商品优惠券，好用的话记得分享给好友哦
 
-回复【个人信息】查看账户详情
+回复【帮助】可查询指信息
+回复【提现】申请账户余额提现
+回复【推广】可申请机器人代理
+回复【个人信息】可看个当前账户信息
+
+回复【买+商品名称】
+回复【找+商品名称】
+回复【搜+商品名称】查看商品优惠券合集
+
 分享【京东商品链接】或者【淘口令】
 精准查询商品优惠券和返利信息！
+分享【VIP视频链接】免费查看高清VIP视频！
 
 优惠券使用教程：
 '''+config.get('URL', 'course')+'''
+跑堂优惠券常见问题：
+'''+config.get('URL', 'faq')+'''
 免费看电影方法：
 '''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
@@ -109,18 +124,31 @@ class TextMessage:
                 user_wxid = user.puid
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-一一一一 系统消息 一一一一
+Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东商品优惠券，好用的话记得分享给好友哦
 
-账户创建成功！0.3元奖励金已发放！
+回复【帮助】可查询指信息
+回复【提现】申请账户余额提现
+回复【推广】可申请机器人代理
+回复【个人信息】可看个当前账户信息
 
-回复【个人信息】查看账户详情
+回复【买+商品名称】
+回复【找+商品名称】
+回复【搜+商品名称】查看商品优惠券合集
+
 分享【京东商品链接】或者【淘口令】
 精准查询商品优惠券和返利信息！
+分享【VIP视频链接】免费查看高清VIP视频！
 
 优惠券使用教程：
 '''+config.get('URL', 'course')+'''
+跑堂优惠券常见问题：
+'''+config.get('URL', 'faq')+'''
 免费看电影方法：
 '''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
@@ -133,7 +161,7 @@ class TextMessage:
 
                 # 帮助操作
                 text = '''
-一一一一 系统信息 一一一一
+Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东商品优惠券，好用的话记得分享给好友哦
 
 回复【帮助】可查询指信息
 回复【提现】申请账户余额提现
@@ -281,7 +309,7 @@ class TextMessage:
 
 将机器人名片分享到群或者好友
 好友添加机器人为好友
-您和好友都将获取0.3元现金奖励
+您和好友都将获取'''+ config.get('BN', 'bn2') +'''元现金奖励
 您将永久享受好友返利提成
 邀请好友得返利：
 '''+config.get('URL', 'lnvit')+'''
@@ -556,7 +584,7 @@ class TextMessage:
 
 将机器人名片分享到群或者好友
 好友添加机器人为好友
-您和好友都将获取0.3元现金奖励
+您和好友都将获取'''+ config.get('BN', 'bn2') +'''元现金奖励
 您将永久享受好友返利提成
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
