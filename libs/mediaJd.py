@@ -532,7 +532,6 @@ class MediaJd:
                 return {"info": "not_info"}
             else:
                 get_query_sql = "SELECT * FROM taojin_query_record WHERE good_title='" + str(info['skuList'][0]['skuName']) + "'AND puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"' ORDER BY create_time LIMIT 1;"
-                print(get_query_sql)
                 get_query_info = cm.ExecQuery(get_query_sql)
 
                 if get_query_info == ():
@@ -549,10 +548,9 @@ class MediaJd:
 
                 # 定义SQL语句 查询用户是否已经存在邀请人
                 # 判断是否已经有邀请人了
-                if check_user_res and check_user_res[0][17] != 0:
+                if check_user_res and check_user_res[0][17] != '0':
 
                     get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';"
-                    print(get_parent_sql)
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
                     # 计算返利金额
@@ -574,6 +572,7 @@ class MediaJd:
                         check_user_res[0][10] + jishen, 2)
 
                     add_parent_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn4')), 2)
+
                     withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * float(config.get('BN', 'bn4')), 2)
 
                     # 订单数加1
@@ -607,9 +606,9 @@ class MediaJd:
 
                     new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
-                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
@@ -661,7 +660,6 @@ class MediaJd:
                             'parent': get_parent_info[0][4]}
                 else:
                     add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3')), 2)
-                    print(info, add_balance)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     jd = round(float(check_user_res[0][7]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
@@ -678,7 +676,7 @@ class MediaJd:
                     # 淘宝订单数加一
                     jd_order_num = int(check_user_res[0][12]) + 1
 
-                    up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid=" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
+                    up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
 
                     cm.ExecNonQuery(up_sql)
 
@@ -691,9 +689,12 @@ class MediaJd:
                         new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
                         bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+                        u2 = "UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'"
+                        cm.ExecNonQuery(u2)
 
-                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')")
+                    i1 = "INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')"
+
+                    cm.ExecNonQuery(i1)
 
                     # 累计订单数量
                     order_nums = cm.ExecQuery(select_order_num)
@@ -702,15 +703,15 @@ class MediaJd:
 
                     new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
 
-                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
-
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
                     args = {
                         'wx_bot': bot.self.nick_name,
                         'bot_puid': bot.self.puid,
                         'username': check_user_res[0][4],
                         'rebate_amount': add_balance,
+                        'puid': puid,
                         'type': 3,
                         'create_time': time.time()
                     }
