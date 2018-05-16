@@ -405,7 +405,7 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
             elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
                     len(msg['Text'].split(',')[1]) == 18):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
+                print(res2)
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
