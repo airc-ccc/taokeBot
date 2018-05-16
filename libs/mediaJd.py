@@ -289,6 +289,9 @@ class MediaJd:
         with open(cookie_fname, 'w') as f:
             f.write(json.dumps(cookies))
 
+        wd.quit()
+
+
         return 'Login Success'
 
     def login(self):
@@ -491,7 +494,7 @@ class MediaJd:
         rj = json.loads(res.text)
 
         data = json.loads(rj['jingdong_UnionService_queryOrderList_responce']['result'])
-
+        print(data)
         for item in data['data']:
             if int(order_id) == int(item['orderId']):
                 res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
@@ -508,6 +511,7 @@ class MediaJd:
 【3】，查询格式不正确(正确格式：2018-03-20,73462222028 )
 【4】，订单完成日期错误，请输入正确的订单查询日期
 【6】，订单号错误，请输入正确的订单号
+【7】， 订单未完成
 
 请按照提示进行重新操作！
                 '''
@@ -538,7 +542,11 @@ class MediaJd:
                 user_text = '''
 一一一一订单信息一一一一
 
-亲，订单返利失败，当前商品不是通过当前机器人购买的呢！
+亲，订单返利失败！
+原因：
+(1) 当前商品不是通过当前机器人购买的呢
+(2) 这不是你购买的商品，不是你的订单哦
+
                 '''
                 return {'info': 'not_order', 'user_text': user_text}
 

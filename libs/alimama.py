@@ -565,6 +565,9 @@ class Alimama:
                 cookies_arr.append([item['name'], item['value']])
 
             f.write(json.dumps(cookies_arr))
+
+        wd.quit()
+
         return 'login success'
 
     def isElementExist(self, bower, element):
@@ -895,7 +898,7 @@ class Alimama:
             res = self.get_url(url, headers)
 
             res_dict = json.loads(res.text)
-
+            print(res_dict)
             for item in res_dict['data']['paymentList']:
                 if int(order_id) == int(item['taobaoTradeParentId']):
                     res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
@@ -946,7 +949,10 @@ class Alimama:
                     user_text = '''
     一一一一订单信息一一一一
 
-    亲，订单返利失败了，当前商品不是通过当前机器人购买的呢
+    亲，订单返利失败！
+    原因：
+    (1) 当前商品不是通过当前机器人购买的呢
+    (2) 这不是你购买的商品，不是你的订单哦
                     '''
                     return {'info': 'not_order', 'user_text': user_text}
 
