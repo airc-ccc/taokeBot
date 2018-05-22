@@ -61,7 +61,10 @@ class Alimama:
 
             if url is None:
                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
-                taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+                try:
+                    taokouling = re.search(r'《.*?《', msg['Text']).group()
+                except:
+                    taokouling = re.search(r'￥.*?￥', msg['Text']).group()
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -88,7 +91,7 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3')), 2)
+            fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
@@ -170,7 +173,10 @@ class Alimama:
 
             if url is None:
                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
-                taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+                try:
+                    taokouling = re.search(r'《.*?《', msg['Text']).group()
+                except:
+                    taokouling = re.search(r'￥.*?￥', msg['Text']).group()
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -197,7 +203,7 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * float(config.get('BN', 'bn3')), 2)
+            fx2 = round(float(res['tkCommonFee']) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
@@ -628,7 +634,7 @@ class Alimama:
             res = self.get_url(url, headers)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"', '2')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -663,7 +669,7 @@ class Alimama:
             res = self.get_url(url, headers)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"', '2')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -966,7 +972,7 @@ class Alimama:
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
                     # 计算返佣
-                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3')), 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3t')), 2)
                     # 累加余额
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     # 累加淘宝总返利
@@ -1068,7 +1074,7 @@ class Alimama:
                     cm.Close()
                     return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success', 'parent': get_parent_info[0][4]}
                 else:
-                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3')), 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3t')), 2)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
