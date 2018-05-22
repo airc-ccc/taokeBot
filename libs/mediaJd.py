@@ -107,8 +107,8 @@ class MediaJd:
     2018-01-01,12345678901
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
             else:
@@ -132,8 +132,8 @@ class MediaJd:
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
 
                 return text
@@ -184,9 +184,9 @@ class MediaJd:
      返利链接:%s
                     ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
-                                 'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                                 'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
             else:
@@ -203,9 +203,9 @@ class MediaJd:
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
                 res['data']['shotCouponUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
-                             msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                             msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
         except Exception as e:
@@ -288,7 +288,7 @@ class MediaJd:
         # 写入Cookies文件
         with open(cookie_fname, 'w') as f:
             f.write(json.dumps(cookies))
-
+        time.sleep(5)
         wd.quit()
 
 
@@ -297,7 +297,7 @@ class MediaJd:
     def login(self):
         clr = self.check_login()
         if 'Login Success' in clr:
-            self.logger.debug('京东已登录！不需要再次登录！')
+            print('京东已登录！不需要再次登录！')
             return 'Login Success'
         else:
             self.do_login()
@@ -394,9 +394,9 @@ class MediaJd:
             if coupon != None:
                 good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
                 good_text['youhuiquan_price'] = coupon_price
-                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * float(config.get('BN', 'bn3')), 2)
+                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * float(config.get('BN', 'bn3j')), 2)
             else:
-                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * float(config.get('BN', 'bn3')), 2)
+                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * float(config.get('BN', 'bn3j')), 2)
 
             good_text['coupon_price2'] = coupon_price
             return good_text
@@ -554,7 +554,7 @@ class MediaJd:
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
                     # 计算返利金额
-                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3')), 2)
+                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3j')), 2)
                     # 累加宗金额
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     # 计算京东返利金额
@@ -659,7 +659,7 @@ class MediaJd:
                     return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success',
                             'parent': get_parent_info[0][4]}
                 else:
-                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3')), 2)
+                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3j')), 2)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     jd = round(float(check_user_res[0][7]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)

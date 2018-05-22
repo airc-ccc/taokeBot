@@ -1,6 +1,6 @@
 /*
 SQLyog 企业版 - MySQL GUI v8.14 
-MySQL - 5.5.5-10.1.31-MariaDB : Database - wxpy_taojin
+MySQL - 5.5.5-10.1.31-MariaDB : Database - taojin_bot
 *********************************************************************
 */
 
@@ -12,9 +12,9 @@ MySQL - 5.5.5-10.1.31-MariaDB : Database - wxpy_taojin
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-CREATE DATABASE /*!32312 IF NOT EXISTS*/`wxpy_taojin` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`taojin_bot` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
-USE `wxpy_taojin`;
+USE `taojin_bot`;
 
 /*Table structure for table `taojin_current_log` */
 
@@ -30,10 +30,6 @@ CREATE TABLE `taojin_current_log` (
   `bot_puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_current_log` */
-
-insert  into `taojin_current_log`(`id`,`wx_bot`,`username`,`amount`,`create_time`,`puid`,`bot_puid`) values (1,'彭涛','彭波',0.30,1526126393,'77c74a5f','389a91e9');
 
 /*Table structure for table `taojin_good_info` */
 
@@ -57,8 +53,6 @@ CREATE TABLE `taojin_good_info` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
-/*Data for the table `taojin_good_info` */
-
 /*Table structure for table `taojin_group_message` */
 
 DROP TABLE IF EXISTS `taojin_group_message`;
@@ -72,8 +66,6 @@ CREATE TABLE `taojin_group_message` (
   `bot_puid` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '机器人puid',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_group_message` */
 
 /*Table structure for table `taojin_order` */
 
@@ -90,9 +82,7 @@ CREATE TABLE `taojin_order` (
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   `bot_puid` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_order` */
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_order_info` */
 
@@ -108,8 +98,6 @@ CREATE TABLE `taojin_order_info` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-/*Data for the table `taojin_order_info` */
-
 /*Table structure for table `taojin_proxy_info` */
 
 DROP TABLE IF EXISTS `taojin_proxy_info`;
@@ -123,8 +111,6 @@ CREATE TABLE `taojin_proxy_info` (
   `jd_password` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT 'äº¬ä¸œè”ç›Ÿå¯†ç ',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
-/*Data for the table `taojin_proxy_info` */
 
 /*Table structure for table `taojin_query_record` */
 
@@ -142,12 +128,9 @@ CREATE TABLE `taojin_query_record` (
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '用户puid',
   `bot_puid` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '机器人puid',
   `chatroom` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '群聊昵称',
+  `type` tinyint(1) NOT NULL COMMENT '1京东 2 淘宝 3 拼多多',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_query_record` */
-
-insert  into `taojin_query_record`(`id`,`wx_bot`,`skuid`,`good_title`,`good_price`,`good_coupon`,`username`,`create_time`,`puid`,`bot_puid`,`chatroom`) values (105,'彭涛','1892019','Apple iPad mini 4 平板电脑 7.9英寸（128G WLAN版/A8芯片/Retina显示屏/Touch ID技术 MK9P2CH）银色','2498.00',0,'彭波',1526123913,'77c74a5f','389a91e9',NULL),(106,'彭涛','1892019','Apple iPad mini 4 平板电脑 7.9英寸（128G WLAN版/A8芯片/Retina显示屏/Touch ID技术 MK9P2CH）银色','2498.00',0,'彭波',1526123980,'77c74a5f','389a91e9',NULL),(107,'彭涛','1892019','Apple iPad mini 4 平板电脑 7.9英寸（128G WLAN版/A8芯片/Retina显示屏/Touch ID技术 MK9P2CH）银色','2498.00',0,'彭波',1526124088,'77c74a5f','389a91e9',NULL),(108,'彭涛','1892019','Apple iPad mini 4 平板电脑 7.9英寸（128G WLAN版/A8芯片/Retina显示屏/Touch ID技术 MK9P2CH）银色','2498.00',0,'彭波',1526124146,'77c74a5f','389a91e9',NULL),(109,'彭涛','1892019','Apple iPad mini 4 平板电脑 7.9英寸（128G WLAN版/A8芯片/Retina显示屏/Touch ID技术 MK9P2CH）银色','2498.00',0,'彭波',1526124192,'77c74a5f','389a91e9',NULL);
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_rebate_log` */
 
@@ -163,11 +146,7 @@ CREATE TABLE `taojin_rebate_log` (
   `create_time` int(11) NOT NULL COMMENT 'åˆ›å»ºæ—¶é—´',
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=229 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_rebate_log` */
-
-insert  into `taojin_rebate_log`(`id`,`bot_puid`,`wx_bot`,`username`,`rebate_amount`,`type`,`create_time`,`puid`) values (228,'389a91e9','彭涛','彭波',0.30,1,1526121594,'77c74a5f');
+) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_user_info` */
 
@@ -200,11 +179,7 @@ CREATE TABLE `taojin_user_info` (
   `remarkname` varchar(255) NOT NULL COMMENT '用户备注',
   `bot_puid` varchar(255) NOT NULL COMMENT '机器人的puid',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_user_info` */
-
-insert  into `taojin_user_info`(`id`,`wx_bot`,`puid`,`sex`,`nickname`,`lnivt_code`,`total_rebate_amount`,`jd_rebate_amount`,`taobao_rebate_amount`,`withdrawals_amount`,`save_money`,`order_quantity`,`jd_order_quantity`,`taobao_order_quantity`,`jd_completed_order`,`taobao_completed_order`,`jd_unfinished_order`,`lnivter`,`taobao_unfinished_order`,`friends_rebate`,`friends_number`,`create_time`,`update_time`,`remarkname`,`bot_puid`) values (49,'彭涛','77c74a5f',1,'彭波','77c74a5f',0.30,0.00,0.00,0.00,0.00,0,0,0,0,0,0,'0',0,0.00,0,1526121594,1526126393,'2018512_4_B_0','389a91e9');
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

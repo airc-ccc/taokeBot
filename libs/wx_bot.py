@@ -11,6 +11,7 @@ from libs import my_utils
 from libs import mediaJd
 from libs import alimama
 from libs import groupMessage
+from libs import pingdd
 
 class tbAndJd(object):
     def __init__(self, bot):
@@ -23,6 +24,7 @@ class tbAndJd(object):
         self.ort = orther.Orther()
         self.config = configparser.ConfigParser()
         self.config.read('config.conf',encoding="utf-8-sig")
+        self.pdd = pingdd.Pdd(bot)
 
     # 检查是否是淘宝链接
     def check_if_is_tb_link(self, msg, bot, raw):
@@ -47,6 +49,8 @@ class tbAndJd(object):
                 xml_info = soup_xml.select('appname')
                 if xml_info[0].string == "京东":
                     return self.mjd.getJd(raw, bot, msg, msg['Url'])
+                elif xml_info[0].string == "拼多多":
+                    return self.pdd.getGood(raw, msg)
                 else:
                     return self.movie.getMovie(msg)
         elif msg['Type'] == 'Text':  # 关键字查询信息
@@ -64,6 +68,8 @@ class tbAndJd(object):
                 xml_info = soup_xml.select('appname')
                 if xml_info[0].string == "京东":
                     return self.mjd.getGroupJd(bot, msg, msg['Url'], raw)
+                elif xml_info[0].string == "拼多多":
+                    return self.pdd.getGroupGood(raw, msg)
                 else:
                     return self.movie.getGroupMovie(msg)
         elif msg['Type'] == 'Text':
