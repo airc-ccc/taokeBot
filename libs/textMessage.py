@@ -199,6 +199,7 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 
                 print(config.get('ADMIN', 'ADMIN_USER'))
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
+                print(adminuser)
                 # try:
                 select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid+"';"
                 select_user_res = cm.ExecQuery(select_user_sql)

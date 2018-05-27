@@ -1,1 +1,0 @@
-[{"name": "PASS_ID", "value": "19dfd51f2123b13d3b0503122fe29a95", "path": "/", "domain": "jinbao.pinduoduo.com", "expiry": 1527088877, "secure": false, "httpOnly": false}]
