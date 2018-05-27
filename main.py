@@ -75,8 +75,8 @@ def auto_accept_friends(msg):
         msg_soup = soup.find('msg')
         # 邀请人昵称
         sourcname = msg_soup.get('sourcenickname')
-        self.logger.debug(sourcname)
-        if sourcname != None:
+        print('gsdf',sourcname)
+        if sourcname:
             # 通过好友验证
             new_friend = msg.card.accept()
             print('PUIDIDIDIIDIDIDIDI', new_friend.puid)
@@ -122,8 +122,15 @@ def auto_accept_friends(msg):
     '''+config.get('URL', 'tbshop')+'''
     邀请好友得返利说明：
     '''+config.get('URL', 'lnvit')+'''
-                '''
+                '''  
             new_friend.send(text)
+            livit_text = '''
+---- 系统消息 ----
+你成功的邀请了【%s】,
+0.3元奖励金以到账
+你永久获得该好友的购物返利红包提成
+			''' % (new_friend.nick_name)
+            lnivt_user.send(livit_text)
     except Exception as e:
         trace = traceback.format_exc()
         print("error:{},trace:{}".format(str(e), trace))
