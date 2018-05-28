@@ -296,6 +296,7 @@ class MediaJd:
 
     def login(self):
         clr = self.check_login()
+        print(clr)
         if 'Login Success' in clr:
             print('京东已登录！不需要再次登录！')
             return 'Login Success'
@@ -340,10 +341,9 @@ class MediaJd:
             arr = string.split(',')
 
             dict_str = {}
-
             for item in arr:
                 str = item.split('\':')
-                str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
+                str_b = str[0].split('\r\n')
                 str_1 = str_b[1].strip()
                 str_2 = str_1.split('\'')
                 str_3 = str[1].split('\'')
@@ -401,7 +401,8 @@ class MediaJd:
             good_text['coupon_price2'] = coupon_price
             return good_text
         except Exception as e:
-            self.logger.debug(e)
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
 
 
     # 随机获取商品信息
