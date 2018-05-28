@@ -1,9 +1,0 @@
-selenium
-wxpy
-beautifulsoup4
-pymysql
-dateutils
-pillow
-bottle
-flask
-lxml

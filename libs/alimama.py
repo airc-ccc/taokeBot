@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+import os
 import re
 import json
 import os.path
@@ -38,6 +39,7 @@ class Alimama:
             self.ort = Orther()
 
     def getTao(self, bot, msg, raw):
+        print(msg, '41')
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
@@ -54,6 +56,7 @@ class Alimama:
                     url = None
 
             else:
+                print(msg, '58')
                 try:
                     url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
                 except:
@@ -65,6 +68,7 @@ class Alimama:
                     taokouling = re.search(r'《.*?《', msg['Text']).group()
                 except:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+                print(taokouling)
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -394,6 +398,7 @@ class Alimama:
         }
         res = self.get_url(url, headers=headers)
         rj = json.loads(res.text.replace('(function(){jsonp31(', '').replace(');})();', ''))
+        self.logger.debug(rj)
         return rj
 
     def show_qr_image(self):
@@ -505,6 +510,7 @@ class Alimama:
                 self.logger.debug('login success')
                 # self.logger.debug(self.se.cookies)
                 with open(cookie_fname, 'w') as f:
+                    print(self.se.cookies.items())
                     f.write(json.dumps(self.se.cookies.items()))
                 return 'login success'
             # 二维码过一段时间会失效
@@ -521,7 +527,7 @@ class Alimama:
                 self.logger.debug(u"淘宝已经登录 不需要再次登录")
                 return 'login success'
             else:
-                dlr = self.do_login()
+                dlr = self.open_do_login()
                 if dlr is None:
                     return 'login failed'
                 else:
@@ -534,35 +540,40 @@ class Alimama:
     def open_do_login(self):
         # loginname = input('请输入淘宝联盟账号:')
         # nloginpwd = input('请输入淘宝联盟密码:')
+        #profileDir = "C:\\Users\pengtao\AppData\Local\Mozilla\Firefox\Profiles\\24xolutj.default"
 
+        #profile = webdriver.FirefoxProfile(profileDir)
+        #print(profile)
+        #wd = webdriver.Firefox(profile)
         wd = webdriver.Firefox()
+
         wd.get('http://pub.alimama.com')
 
-        time.sleep(10)
+        time.sleep(60)
 
         #js = "var pass = document.getElementById(\"TPL_password_1\").setAttribute(\"autocomplete\", \"on\")"
 
-        #wd.execute_script(js)
-        wd.switch_to.frame('taobaoLoginIfr')
-        time.sleep(3)
-        wd.find_element_by_class_name('login-switch').click()
-        time.sleep(3)
-        # 输入账号密码
-        wd.find_element_by_id('TPL_username_1').send_keys(config.get('TB', 'TB_USERNAME'))
-        # 休息3秒
-        time.sleep(3)
-        # 输入密码
-        wd.find_element_by_id('TPL_password_1').send_keys(config.get('TB', 'TB_PASSWORD'))
+        # #wd.execute_script(js)
+        # wd.switch_to.frame('taobaoLoginIfr')
+        # time.sleep(3)
+        # wd.find_element_by_class_name('login-switch').click()
+        # time.sleep(3)
+        # # 输入账号密码
+        # wd.find_element_by_id('TPL_username_1').send_keys(config.get('TB', 'TB_USERNAME'))
+        # # 休息3秒
+        # time.sleep(3)
+        # # 输入密码
+        # wd.find_element_by_id('TPL_password_1').send_keys(config.get('TB', 'TB_PASSWORD'))
         # 点击登录按钮
-        time.sleep(20)
-        wd.find_element_by_id('J_SubmitStatic').click()
+        # time.sleep(40)
+        # wd.find_element_by_id('J_SubmitStatic').click()
 
         # 判断是否需要验证码
-        time.sleep(10)
+        # time.sleep(10)
 
-        if self.isElementExist(wd, 'J_LoginCheck'):
-            print('验证码存在！睡眠120秒')
-            time.sleep(160)
+        # if self.isElementExist(wd, 'J_LoginCheck'):
+        #     print('验证码存在！睡眠120秒')
+        #     time.sleep(160)
 
         self.logger.debug('login success')
         with open(cookie_fname, 'w') as f:
@@ -588,6 +599,7 @@ class Alimama:
         tb_token = None
         for c in self.se.cookies.items():
             if c[0] == '_tb_token_':
+                print('淘宝token', c[1])
                 return c[1]
         if tb_token is None:
             return 'test'
@@ -688,6 +700,7 @@ class Alimama:
             gcid, siteid, adzoneid = self.__get_tk_link_s1(auctionid, tb_token, pvid)
             self.__get_tk_link_s2(gcid, siteid, adzoneid, auctionid, tb_token, pvid)
             res = self.__get_tk_link_s3(auctionid, adzoneid, siteid, tb_token, pvid)
+            self.logger.debug(res)
             return res
         except Exception as e:
             trace = traceback.format_exc()
@@ -709,6 +722,7 @@ class Alimama:
         }
         res = self.get_url(url, headers)
         rj = res.json()
+        self.logger.debug(rj)
         gcid = rj['data']['otherList'][0]['gcid']
         siteid = rj['data']['otherList'][0]['siteid']
         adzoneid = rj['data']['otherAdzones'][0]['sub'][0]['id']

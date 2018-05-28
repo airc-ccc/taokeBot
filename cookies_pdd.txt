@@ -1,1 +1,1 @@
-[]
+[{"name": "PASS_ID", "value": "ca4c7d2be735be7a30ac62fe324b4ae8", "path": "/", "domain": "jinbao.pinduoduo.com", "expiry": 1527525996, "secure": false, "httpOnly": false}]
