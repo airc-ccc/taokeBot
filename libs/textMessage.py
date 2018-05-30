@@ -59,7 +59,7 @@ class TextMessage:
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+                tburl = quote('http://taoquan.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
 
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
@@ -536,7 +536,7 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+                tburl = quote('http://taoquan.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''

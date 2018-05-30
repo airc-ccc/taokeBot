@@ -16,7 +16,7 @@ class SharMovie(object):
         soup_xml = BeautifulSoup(msg['Content'], 'lxml')
         xml_info = soup_xml.select('appname')
         # 定义视频网站
-        shipin = ['腾讯视频', '爱奇艺', '优酷视频', '芒果 TV']
+        shipin = ['腾讯视频', '爱奇艺', '优酷视频', '芒果 TV', '搜狐视频客户端版']
 
         for item in shipin:
             if item == xml_info[0].string:

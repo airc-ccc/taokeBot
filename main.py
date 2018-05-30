@@ -122,7 +122,7 @@ def auto_accept_friends(msg):
     '''+config.get('URL', 'tbshop')+'''
     邀请好友得返利说明：
     '''+config.get('URL', 'lnvit')+'''
-                '''  
+                '''
             new_friend.send(text)
             livit_text = '''
 ---- 系统消息 ----
@@ -130,6 +130,7 @@ def auto_accept_friends(msg):
 0.3元奖励金以到账
 你永久获得该好友的购物返利红包提成
 			''' % (new_friend.nick_name)
+            print(lnivt_user.nick_name, livit_text)
             lnivt_user.send(livit_text)
     except Exception as e:
         trace = traceback.format_exc()

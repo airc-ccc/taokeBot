@@ -9,6 +9,8 @@ import platform
 import sys
 import time
 import traceback
+import base64
+from Crypto.Cipher import AES
 import datetime
 if sys.version_info[0] < 3:
     import urllib
@@ -22,6 +24,7 @@ from threading import Thread
 from dateutil.relativedelta import relativedelta
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
+from libs.movie import SharMovie
 from selenium import webdriver
 
 cookie_fname = 'cookies_taobao.txt'
@@ -37,6 +40,16 @@ class Alimama:
             self.start_keep_cookie_thread()
             self.logger = logger
             self.ort = Orther()
+            self.movie = SharMovie()
+
+        # 加密方法
+
+    def encrypt_oracle(self, value):
+        a = ''
+        for i in value:
+            a = a + str(ord(i)) + '**'
+
+        return a
 
     def getTao(self, bot, msg, raw):
         print(msg, '41')
@@ -64,10 +77,12 @@ class Alimama:
 
             if url is None:
                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
-                try:
+                if '《' in msg['Text']:
                     taokouling = re.search(r'《.*?《', msg['Text']).group()
-                except:
+                elif '￥' in msg['Text']:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+                elif '€' in msg['Text']:
+                    taokouling = re.search(r'€.*?€', msg['Text']).group()
                 print(taokouling)
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
@@ -76,6 +91,7 @@ class Alimama:
             real_url = self.get_real_url(url)
 
             res = self.get_detail(bot, real_url, raw)
+            print(res)
             if res == 'no match item':
                 text = '''
 一一一一 返利信息 一一一一
@@ -98,11 +114,21 @@ class Alimama:
             fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
-
+            print('aaaaaaaaaaaaaaaa', res1)
             tao_token = res1['taoToken']
-            coupon_link = res1['couponLink']
+            asciistr2 = self.encrypt_oracle(tao_token)
+            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+            print('cccccccccccccccccccccccccccc', longurl2)
+            shorturl2 = self.movie.getShortUrl(longurl2)
+            print('1s11sssssssssssssssssssss', shorturl2)
+
+            coupon_link = res1['couponLink' ]
             if coupon_link != "":
                 coupon_token = res1['couponLinkTaoToken']
+                asciistr = self.encrypt_oracle(coupon_token)
+                longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+                print('ddddddddddddddddddddddddddddddddddd',longurl)
+                shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
 一一一一返利信息一一一一
 
@@ -115,11 +141,11 @@ class Alimama:
 【淘口令】%s
 
 省钱步骤：
-1,复制本条信息打开淘宝App领取优惠券下单！
+1 点击链接,复制本条信息打开淘宝App领取优惠券下单！
 2,订单完成后，将订单完成日期和订单号发给我哦！
 例如：
 2018-01-01,12345678901
-                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
+                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
             else:
                 res_text = '''
 一一一一返利信息一一一一
@@ -134,7 +160,7 @@ class Alimama:
 2,订单完成后，将订单完成日期和订单号发给我哦！
 例如：
 2018-01-01,12345678901
-                                        ''' % (q, price, fx2, tao_token)
+                                        ''' % (q, price, fx2, shorturl2)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -142,7 +168,7 @@ class Alimama:
             info = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦fsda
 
 
 京东优惠券商城：
@@ -177,10 +203,12 @@ class Alimama:
 
             if url is None:
                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
-                try:
+                if '《' in msg['Text']:
                     taokouling = re.search(r'《.*?《', msg['Text']).group()
-                except:
+                elif '￥' in msg['Text']:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+                elif '€' in msg['Text']:
+                    taokouling = re.search(r'€.*?€', msg['Text']).group()
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -212,9 +240,15 @@ class Alimama:
             res1 = self.get_tk_link(auctionid)
 
             tao_token = res1['taoToken']
+            asciistr2 = self.encrypt_oracle(tao_token)
+            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + '&image=' + res['pictUrl'] + '&title=' + res['title']
+            shorturl2 = self.movie.getShortUrl(longurl2)
             coupon_link = res1['couponLink']
             if coupon_link != "":
                 coupon_token = res1['couponLinkTaoToken']
+                asciistr = self.encrypt_oracle(coupon_token)
+                longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + '&image=' + res['pictUrl'] + '&title=' + res['title']
+                shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
 一一一一返利信息一一一一
 
@@ -226,7 +260,7 @@ class Alimama:
 【淘口令】%s
 
  复制本条消息，打开淘宝App领取优惠券！
-                        ''' % (q, price, coupon_amount, real_price, coupon_token)
+                        ''' % (q, price, coupon_amount, real_price, shorturl)
             else:
                 res_text = '''
 一一一一返利信息一一一一
@@ -235,7 +269,7 @@ class Alimama:
 【淘宝价】%s元
 【淘口令】%s
  复制本条消息
-                                        ''' % (q, price, tao_token)
+                                        ''' % (q, price, shorturl2)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -700,7 +734,7 @@ class Alimama:
             gcid, siteid, adzoneid = self.__get_tk_link_s1(auctionid, tb_token, pvid)
             self.__get_tk_link_s2(gcid, siteid, adzoneid, auctionid, tb_token, pvid)
             res = self.__get_tk_link_s3(auctionid, adzoneid, siteid, tb_token, pvid)
-            self.logger.debug(res)
+
             return res
         except Exception as e:
             trace = traceback.format_exc()
@@ -722,7 +756,7 @@ class Alimama:
         }
         res = self.get_url(url, headers)
         rj = res.json()
-        self.logger.debug(rj)
+        # self.logger.debug(rj)
         gcid = rj['data']['otherList'][0]['gcid']
         siteid = rj['data']['otherList'][0]['siteid']
         adzoneid = rj['data']['otherAdzones'][0]['sub'][0]['id']
