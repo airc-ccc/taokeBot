@@ -10,7 +10,6 @@ import sys
 import time
 import traceback
 import base64
-from Crypto.Cipher import AES
 import datetime
 if sys.version_info[0] < 3:
     import urllib
