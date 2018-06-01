@@ -55,7 +55,7 @@ class Alimama:
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持淘宝商品查询
+机器人在升级中, 暂不支持淘宝商品查询
                     '''
             return text
 
@@ -182,7 +182,7 @@ class Alimama:
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持商品查询
+机器人在升级中, 暂不支持淘宝商品查询
                     '''
             return text
         try:
