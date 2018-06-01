@@ -129,17 +129,17 @@ class Pdd:
             trace = traceback.format_exc()
             print("error:{},trace:{}".format(str(e), trace))
 
-        def getGroupGood(self, raw, msg):
-            cm = ConnectMysql()
-            try:
-                wei_info = self.bot.core.search_chatrooms(userName=msg['FromUserName'])
-                puid = raw.member.puid
-                # 获取商品信息，首先获取商品id
-                arr1 = msg['Text'].split('元')
-                arr2 = arr1[1].split('拼多多')
-                good_id = self.getDetail(arr2[0])
-                if good_id == 'GetGoodIdError':
-                    error_text = '''
+    def getGroupGood(self, raw, msg):
+        cm = ConnectMysql()
+        try:
+            wei_info = self.bot.core.search_chatrooms(userName=msg['FromUserName'])
+            puid = raw.member.puid
+            # 获取商品信息，首先获取商品id
+            arr1 = msg['Text'].split('元')
+            arr2 = arr1[1].split('拼多多')
+            good_id = self.getDetail(arr2[0])
+            if good_id == 'GetGoodIdError':
+                error_text = '''
 一一一一 返利信息 一一一一
 
 亲，当前商品暂无优惠券,建议您换一个商品试试呢
@@ -150,13 +150,13 @@ class Pdd:
 '''+self.config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+self.config.get('URL', 'lnvit')+'''
-                            '''
-                    return error_text
+                        '''
+                return error_text
 
-                pid = self.getPromotion()
+            pid = self.getPromotion()
 
-                if pid == 'GetPromotionIdError':
-                    error_text = '''
+            if pid == 'GetPromotionIdError':
+                error_text = '''
 一一一一 返利信息 一一一一
 
 亲，当前商品暂无优惠券,建议您换一个商品试试呢
@@ -167,26 +167,26 @@ class Pdd:
 '''+self.config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+self.config.get('URL', 'lnvit')+'''
-                            '''
-                    return error_text
+                        '''
+                return error_text
 
-                pid = pid['result']['promotionChannelList'][0]['pid']
-                res = self.getLink(good_id['result']['goodsList'][0]['goodsId'], pid)
-                good = good_id['result']['goodsList'][0]['goodsId']
-                # 判断是否有优惠券
-                if good_id['result']['goodsList'][0]['hasCoupon'] == True:
-                    # 原价
-                    minGroupPrice = float(int(good_id['result']['goodsList'][0]['minGroupPrice']) / 1000)
+            pid = pid['result']['promotionChannelList'][0]['pid']
+            res = self.getLink(good_id['result']['goodsList'][0]['goodsId'], pid)
+            good = good_id['result']['goodsList'][0]['goodsId']
+            # 判断是否有优惠券
+            if good_id['result']['goodsList'][0]['hasCoupon'] == True:
+                # 原价
+                minGroupPrice = float(int(good_id['result']['goodsList'][0]['minGroupPrice']) / 1000)
 
-                    # 优惠券
-                    coupon = int(int(good_id['result']['goodsList'][0]['couponDiscount']) / 1000)
+                # 优惠券
+                coupon = int(int(good_id['result']['goodsList'][0]['couponDiscount']) / 1000)
 
-                    # 卷后价
-                    couponPrice = round(float(minGroupPrice - coupon), 2)
+                # 卷后价
+                couponPrice = round(float(minGroupPrice - coupon), 2)
 
-                    # 返利金额
-                    backPrice = round(((float(couponPrice * (int(good_id['result']['goodsList'][0]['promotionRate']) / 1000)))) * float(self.config.get('BN', 'bn3p')), 2)
-                    text = '''
+                # 返利金额
+                backPrice = round(((float(couponPrice * (int(good_id['result']['goodsList'][0]['promotionRate']) / 1000)))) * float(self.config.get('BN', 'bn3p')), 2)
+                text = '''
 一一一一拼多多返利一一一一
 
 【商品名】%s
@@ -202,20 +202,20 @@ class Pdd:
 2,订单完成后，将订单完成日期和订单号发给我哦！
 例如：
 2018-01-01,12345678901
-                        ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
+                    ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
 
-                    insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
-                                 arr2[0] + "', '" + str(minGroupPrice) + "', '"+str(coupon)+"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3', '"+ wei_info['NickName'] +"')"
-                    cm.ExecNonQuery(insert_sql)
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
+                             arr2[0] + "', '" + str(minGroupPrice) + "', '"+str(coupon)+"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3', '"+ wei_info['NickName'] +"')"
+                cm.ExecNonQuery(insert_sql)
 
-                    return text
-                else:
-                    # 原价
-                    minGroupPrice = float(int(good_id['result']['goodsList'][0]['minGroupPrice']) / 1000)
+                return text
+            else:
+                # 原价
+                minGroupPrice = float(int(good_id['result']['goodsList'][0]['minGroupPrice']) / 1000)
 
-                    # 返利金额
-                    backPrice = round(((float(minGroupPrice * (int(good_id['result']['goodsList'][0]['promotionRate']) / 1000)))) * float(self.config.get('BN', 'bn3p')), 2)
-                    text = '''
+                # 返利金额
+                backPrice = round(((float(minGroupPrice * (int(good_id['result']['goodsList'][0]['promotionRate']) / 1000)))) * float(self.config.get('BN', 'bn3p')), 2)
+                text = '''
 一一一一拼多多返利一一一一
 
 【商品名】%s
@@ -229,15 +229,15 @@ class Pdd:
 2,订单完成后，将订单完成日期和订单号发给我哦！
 例如：
 2018-01-01,12345678901
-                        ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
-                    insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
-                                 arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3', '"+ wei_info['NickName'] +"')"
-                    cm.ExecNonQuery(insert_sql)
+                    ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
+                             arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3', '"+ wei_info['NickName'] +"')"
+                cm.ExecNonQuery(insert_sql)
 
-                    return text
-            except Exception as e:
-                trace = traceback.format_exc()
-                print("error:{},trace:{}".format(str(e), trace))
+                return text
+        except Exception as e:
+            trace = traceback.format_exc()
+            print("error:{},trace:{}".format(str(e), trace))
 
     def check_login(self):
         try:
