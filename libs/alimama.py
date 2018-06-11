@@ -902,81 +902,37 @@ class Alimama:
 
         return r_url
 
-    def get_order(self, bot, msg, times, orderId, userInfo, puid, raw):
+    def get_order(self, bot, msg, orderId, userInfo, puid, raw):
 
-        timestr = re.sub('-', '', times)
+        timestr = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         order_id = int(orderId)
 
         cm = ConnectMysql()
 
-        # 查询用户是否有上线
         check_order_sql = "SELECT * FROM taojin_order WHERE order_id='" + str(order_id) + "' AND bot_puid = '" +bot.self.puid+ "';"
         check_order_res = cm.ExecQuery(check_order_sql)
 
         # 判断该订单是否已经提现
         if len(check_order_res) >= 1:
             cm.Close()
-            send_text ='''
+            sendtext ='''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功返利，请勿重复提交订单信息！
-回复【个人信息】 查看订单及返利信息
+订单【%s】已经成功提交，请勿重复提交订单信息！
 如有疑问！请联系管理员
             ''' % (msg['Text'])
-            return {"info":"order_exit","send_text":send_text}
+            return sendtext
 
-        endTime = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status) VALUES('"+ bot.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '1', '"+ puid +"', '"+ bot.self.puid +"', '1')")
 
-        startTime = str((datetime.date.today() - relativedelta(months=+1)))
+        send_text ='''
+一一一一 订单消息 一一一一
 
-        t = str(round(time.time()))
-
-        try:
-            url = "http://pub.alimama.com/report/getTbkPaymentDetails.json?startTime="+startTime+"&endTime="+endTime+"&payStatus=3&queryType=1&toPage=1&perPageSize=50&total=&t="+t+"&pvid=&_tb_token_=f8b388e3f3e37&_input_charset=utf-8"
-
-            headers = {
-                "Accept": "application/json, text/javascript, */*; q=0.01",
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-                "Cache-Control": "no-cache",
-                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "Host": "pub.alimama.com",
-                "Pragma": "no-cache",
-                "Referer": "http://pub.alimama.com/myunion.htm?spm=a219t.7900221/1.a214tr8.2.3d7c75a560ieiE",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0",
-                "X-Requested-With": "XMLHttpRequest"
-            }
-
-            res = self.get_url(url, headers)
-
-            res_dict = json.loads(res.text)
-            print(res_dict)
-            for item in res_dict['data']['paymentList']:
-                if int(order_id) == int(item['taobaoTradeParentId']):
-                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
-                    return res
-
-            user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-            '''
-
-            return {'info': 'not_order', 'user_text': user_text}
-        except Exception as e:
-            trace = traceback.format_exc()
-
-            self.logger.warning("error:{},trace:{}".format(str(e), trace))
-            return {"info":"feild"}
+订单【%s】已经成功提交，请耐心等待订单结算，
+结算成功后，机器人会自动通知并返利给您
+如有疑问！请联系管理员
+        ''' % (order_id)
+        return send_text
 
     def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
         try:

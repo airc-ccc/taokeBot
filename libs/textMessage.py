@@ -12,6 +12,7 @@ from libs import alimama
 from libs import my_utils
 from libs import tuling
 from libs import movie
+from libs import pingdd
 
 
 config = configparser.ConfigParser()
@@ -24,6 +25,7 @@ class TextMessage:
         self.logger = my_utils.init_logger()
         self.al = alimama.Alimama(self.logger, bot)
         self.ort = Orther()
+        self.pdd = pingdd.Pdd(bot)
         self.movie = movie.SharMovie()
 
     def is_valid_date(self, str):
@@ -59,10 +61,12 @@ class TextMessage:
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://taoquan.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
-
+                tburl = quote("http://taoquan.ptjob.net/index.php?kw=" + msg['Text'][1:], safe='/:?=&')
+                print(tburl)
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
+                print(res2)
+                print(111111)
                 text = '''
 一一一一系统消息一一一一
 亲，以下是【%s】优惠券集合
@@ -257,15 +261,17 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 总返利金额: %s元
 京东返利金额: %s元
 淘宝返利金额: %s元
+拼多多返利金额: %s元
 可提现余额: %s元
 累计提现金额: %s元
 
 累计订单量: %s
 京东订单量: %s
 淘宝订单量: %s
+拼多多订单量: %s
 总好友返利: %s
 总好友个数: %s
-                                    ''' % (user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][9], current_info, user_info[0][11],user_info[0][12], user_info[0][13], user_info[0][19], user_info[0][20])
+                                    ''' % (user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][25], user_info[0][9], current_info, user_info[0][11],user_info[0][12], user_info[0][13], user_info[0][26], user_info[0][19], user_info[0][20])
                 cm.Close()
                 return text
             elif pattern_tuig.search(msg['Text']) != None:
@@ -305,178 +311,34 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 客服人员将尽快和您取得联系，请耐心等待!
                         '''
                 return text
-            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (len(msg['Text'].split(',')[1]) == 11):
+            elif (msg['Text'].isdigit()) and (len(msg['Text']) == 11):
 
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
+                res = self.mjd.get_jd_order(bot, msg, msg['Text'], wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-                    return user_text
-            elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
-                    len(msg['Text'].split('，')[1]) == 11):
-                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
-                if res2['res'] == 'not_info':
-                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
-
-                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
-
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-                    return user_text
-            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
-                    len(msg['Text'].split(',')[1]) == 18):
+                return res
+            elif (msg['Text'].isdigit()) and (len(msg['Text']) == 18):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
                 print(res2)
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
+                res = self.al.get_order(bot, msg, msg['Text'], wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-
-                    return user_text
-            elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
-                    len(msg['Text'].split('，')[1]) == 18):
+                return res
+            elif ('-' in msg['Text']) and (len(msg['Text'].split('-')[1]) == 15) and (len(msg['Text']) == 22):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
+                print(res2)
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
+                res = self.pdd.order_pdd(bot, msg, 123456, wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-
-                    return user_text
-            elif (',' in msg['Text']) and (self.is_valid_date(msg['Text'].split(',')[0])):
-                user_text = '''
-一一一一系统消息一一一一
-
-查询失败！信息格式有误！
-正确格式如下：
-订单完成时间+逗号+订单号
-(京东订单号长度11位，淘宝订单号长度18位)
-例如：
-2018-03-03,123456765432
-
-请确认修改后重新发送
-                                        '''
-                return user_text
-            elif ('，' in msg['Text']) and (self.is_valid_date(msg['Text'].split('，')[0])):
-                user_text = '''
-一一一一系统消息一一一一
-
-查询失败！信息格式有误！
-正确格式如下：
-订单完成时间+逗号+订单号
-(京东订单号长度11位，淘宝订单号长度18位)
-例如：
-2018-03-03,123456765432
-
-请确认修改后重新发送
-                                        '''
-                return user_text
+                return res
             else:
                 if config.get('SYS', 'tl') == 'yes':
                     msg_text = self.tu.tuling(msg)
@@ -510,7 +372,8 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://taoquan.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+                tburl = quote('http://taoquan.ptjob.net/index.php?kw=' + msg['Text'][1:], safe='/:?=&')
+                print(tburl)
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''

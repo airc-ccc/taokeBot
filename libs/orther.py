@@ -162,6 +162,8 @@ class Orther(object):
             return e
 
     def getPuid(self, bot, name):
+        print('namedfsafsdafsdafsda', name)
         res = bot.core.search_friends(userName=name)
+        print('fdsafsdafsd', res)
         my_friends = bot.friends().search(res['NickName'])[0]
         return my_friends.puid

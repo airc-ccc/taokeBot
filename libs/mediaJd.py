@@ -462,12 +462,10 @@ class MediaJd:
         print("insert success!")
 
 
-    def get_jd_order(self, bot, msg, times, orderId, userInfo, puid, raw):
+    def get_jd_order(self, bot, msg, orderId, userInfo, puid, raw):
         # try:
-
-        timestr = re.sub('-', '', times)
         order_id = int(orderId)
-
+        timestr = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         cm = ConnectMysql()
 
         # 查询订单是否已经提现过了
@@ -477,18 +475,29 @@ class MediaJd:
         # 判断该订单是否已经提现
         if len(check_order_res) >= 1:
             cm.Close()
-            send_text = '''
+            sendtext = '''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功返利，请勿重复提交订单信息！
+订单【%s】已经成功提交，请勿重复提交订单信息！
 回复【个人信息】 查看订单及返利信息
 如有疑问！请联系管理员
                         ''' % (order_id)
-            return {"info": "order_exit", "send_text": send_text}
+            return sendtext
 
-        self.load_cookies()
+        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+puid+"', '"+ bot.self.puid +"', '1')")
 
-        url = 'https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B'
+        send_text ='''
+一一一一 订单消息 一一一一
+
+订单【%s】已经成功提交，请耐心等待订单结算，
+结算成功后，机器人会自动通知并返利给您
+如有疑问！请联系管理员
+        ''' % (order_id)
+        return send_text
+
+        '''self.load_cookies()
+
+        url = "https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B"
 
         res = requests.get(url)
 
@@ -502,6 +511,7 @@ class MediaJd:
                 return res
 
         user_text = '''
+        '''
 一一一一订单信息一一一一
 
 订单返利失败！
@@ -515,8 +525,8 @@ class MediaJd:
 【7】， 订单未完成
 
 请按照提示进行重新操作！
-                '''
-        return {'info': 'not_order', 'user_text': user_text}
+                ''''''
+        return {'info': 'not_order', 'user_text': user_text}'''
         # except Exception as e:
         #     print(e)
         #     return {'info': 'feild'}

@@ -16,7 +16,7 @@ from libs import alimama
 from libs import groupMessage
 from libs import wx_bot
 from libs import orther
-
+from libs import order
 
 
 config = configparser.ConfigParser()
@@ -33,6 +33,7 @@ mj = mediaJd.MediaJd(bot)
 al = alimama.Alimama(mu, bot)
 wb = wx_bot.tbAndJd(bot)
 ort = orther.Orther()
+ord = order.Order(bot)
 pdd = pingdd.Pdd(bot)
 
 def taojin_init():
@@ -46,7 +47,7 @@ def taojin_init():
 
     if config.get('SYS', 'tb') == 'yes':
         print('tb...start....')
-        al.login()
+        # al.login()
 
     if config.get('SYS', 'pdd') == 'yes':
         print('pdd...start....')

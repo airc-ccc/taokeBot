@@ -4,6 +4,7 @@ import time
 import platform
 import requests
 import traceback
+import datetime
 import configparser
 from bs4 import BeautifulSoup
 from libs import my_utils
@@ -375,3 +376,40 @@ class Pdd:
             return
         for c in cookies:
             self.se.cookies.set(c['name'], c['value'])
+
+    def order_pdd(self, bot, msg, orderId, userInfo, puid, raw):
+        order_id = orderId
+        order_id2 = msg['Text']
+        print(order_id2)
+        timestr = datetime.datetime.now().strftime('%Y-%m-%d %H:%I:%S')
+        print(timestr)
+        cm = ConnectMysql()
+
+        # 查询订单是否已经提现过了
+        print('ssssssss')
+        check_order_sql = "SELECT * FROM taojin_order WHERE pdd_order_id='" + str(order_id2) + "' AND bot_puid='"+ bot.self.puid +"' AND puid='"+puid+"';"
+        print(check_order_sql)
+        check_order_res = cm.ExecQuery(check_order_sql)
+        print('388')
+        # 判断该订单是否已经提现
+        if len(check_order_res) >= 1:
+            cm.Close()
+            sendtext = '''
+一一一一 订单消息 一一一一
+
+订单【%s】已经成功提交，请勿重复提交订单信息！
+回复【个人信息】 查看订单及返利信息
+如有疑问！请联系管理员
+                        ''' % (order_id2)
+            return sendtext
+
+        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status, pdd_order_id) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '3', '"+puid+"', '"+ bot.self.puid +"', '1', '"+ str(order_id2) +"')")
+        print('dfsaaaaaaaaaaaaaaaaaaaaa')
+        send_text ='''
+一一一一 订单消息 一一一一
+
+订单【%s】已经成功提交，请耐心等待订单结算，
+结算成功后，机器人会自动通知并返利给您
+如有疑问！请联系管理员
+        ''' % (order_id2)
+        return send_text
