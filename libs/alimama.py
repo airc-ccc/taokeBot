@@ -316,6 +316,14 @@ class Alimama:
                 res = self.get_detail2(real_url)
                 auctionid = res['auctionId']
             except Exception as e:
+                # 给管理员发送登录过期消息
+                adminuser = self.bot.friends().search(self.config.get('ADMIN', 'ADMIN_USER'))[0]
+                text = '''
+                ---------- 系统提醒 ----------
+
+                机器人【%s】, 拼多多登录失效
+                                    ''' % (self.bot.self.nick_name)
+                adminuser.send(text)
                 trace = traceback.format_exc()
                 self.logger.warning("error:{},trace:{}".format(str(e), trace))
 

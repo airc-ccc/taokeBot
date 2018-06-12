@@ -7,6 +7,7 @@ import traceback
 import datetime
 import configparser
 from bs4 import BeautifulSoup
+from threading import Thread
 from libs import my_utils
 from selenium import webdriver
 from libs.mysql import ConnectMysql
@@ -18,8 +19,42 @@ class Pdd:
         self.logger = my_utils.init_logger()
         self.se = requests.session()
         self.bot = bot
+        self.start_keep_cookie_thread()
         self.config = configparser.ConfigParser()
         self.config.read('config.conf',encoding="utf-8-sig")
+
+    # 启动一个线程，定时访问京拼多多，防止cookie失效
+    def start_keep_cookie_thread(self):
+        t = Thread(target=self.visit_main_url, args=())
+        t.setDaemon(True)
+        t.start()
+
+    def visit_main_url(self):
+        self.load_cookies()
+        url = "http://jinbao.pinduoduo.com/network/api/common/goodsList"
+        while True:
+            time.sleep(60 * 3)
+            try:
+                good_info = self.getDetail("")
+
+                pid = self.getPromotion()
+
+                if pid['errorMsg'] == "会话已过期":
+                    # 给管理员发送登录过期消息
+                    adminuser = self.bot.friends().search(self.config.get('ADMIN', 'ADMIN_USER'))[0]
+                    text = '''
+---------- 系统提醒 ----------
+
+机器人【%s】, 拼多多登录失效
+                    ''' % (self.bot.self.nick_name)
+                    adminuser.send(text)
+                print("拼多多 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                pid = pid['result']['promotionChannelList'][0]['pid']
+
+                res = self.getLink(good_info['result']['goodsList'][0]['goodsId'], pid)
+            except Exception as e:
+                trace = traceback.format_exc()
+                print("error:{},trace:{}  拼多多登录失效 正在重新登录拼多多".format(str(e), trace))
 
     def getGood(self, raw, msg):
         cm = ConnectMysql()
@@ -288,7 +323,7 @@ class Pdd:
         try:
             url = 'http://jinbao.pinduoduo.com/network/api/common/goodsList'
 
-            data = {'keyword': good_name,'pageNumber': 1,'pageSize': 60,'sortType': 0,'withCoupon': 0}
+            data = {'keyword': good_name, 'pageNumber': 1, 'pageSize': 60, 'sortType': 0, 'withCoupon': 0}
 
             headers = {
                 'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -306,7 +341,6 @@ class Pdd:
             print("error:{},trace:{}".format(str(e), trace))
             return 'GetGoodIdError'
 
-
     # 获取推广位
     def getPromotion(self):
         self.load_cookies()
@@ -321,7 +355,6 @@ class Pdd:
             data = {'pageNumber': 1, 'pageSize': 200}
 
             res = self.se.post(url, json.dumps(data), headers=headers)
-
             res = json.loads(res.text)
 
             return res
@@ -353,7 +386,6 @@ class Pdd:
             trace = traceback.format_exc()
             print("error:{},trace:{}".format(str(e), trace))
             return 'GetGoodLinkError'
-
 
     def load_cookies(self):
         if os.path.isfile(cookie_fname):
