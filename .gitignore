@@ -9,3 +9,4 @@ run_parse_url_server.log
 /geckodriver/
 *.conf
 *.png
+/xlsx/
