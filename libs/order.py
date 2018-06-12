@@ -86,7 +86,7 @@ class Order:
     def getAlmamaOrderDetails(self):
         while True:
             nowtime = time.strftime('%H:%M', time.localtime(time.time()))
-            if '07:00' > nowtime > '05:00':
+            if self.config.get('TIME', 'pddend') > nowtime > self.config.get('TIME', 'pddstart'):
                 print('tb start .............')
                 cm = ConnectMysql()
                 self.load_cookies(c_tb_file, self.tb_se)
@@ -185,7 +185,7 @@ class Order:
 
         while True:
             nowtime = time.strftime('%H:%M', time.localtime(time.time()))
-            if '05:00' > nowtime > '03:00':
+            if self.config.get('TIME', 'jdend') > nowtime > self.config.get('TIME', 'jdstart'):
                 print('jd start........')
                 cm = ConnectMysql()
                 self.jd_load_cookies(c_jd_file, self.jd_se)
@@ -289,7 +289,7 @@ class Order:
 
         while True:
             nowtime = time.strftime('%H:%M', time.localtime(time.time()))
-            if '03:00' > nowtime > '01:00':
+            if self.config.get('TIME', 'pddend') > nowtime > self.config.get('TIME', 'pddstart'):
                 print('pdd start................')
                 cm = ConnectMysql()
                 self.jd_load_cookies(c_pdd_file, self.pdd_se)
