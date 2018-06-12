@@ -154,8 +154,9 @@ class Order:
                             cm.ExecNonQuery(up_set_sql)
                         elif userOrder[0][7] == 3:
                             send_text = '''
-        ---------- 订单信息 -----------
-        你的订单【%s】已失效
+---------- 订单信息 -----------
+
+订单【%s】已失效
                             ''' % (item3)
                             up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
                             print(up_set_sql)
@@ -166,9 +167,10 @@ class Order:
                         userOrder = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id="+item3+"")
                         userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder[0][7]+"'")
                         send_text = '''
-        ---------订单消息----------
-        抱歉你的订单【%s】返利失败！
-        该订单不是通过我们的机器人购买的
+---------订单消息----------
+
+订单【%s】返利失败
+该笔订单非通过机器人购买
                         ''' % (item3)
                         up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
                         print(up_set_sql)
@@ -385,8 +387,9 @@ class Order:
                                 self.changeInfoPdd(userOrder2[0][7], userOrder[0], self.bot)
                             elif userOrder[0][7] == 3 or userOrder[0][7] == 5:
                                 send_text = '''
-            ---------- 订单信息 -----------
-            你的订单【%s】已失效
+---------- 订单信息 -----------
+
+订单【%s】返利失败，已失效
                                 ''' % (item3)
                                 user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                                 user.send(send_text)
@@ -395,9 +398,10 @@ class Order:
                             print(userOrder)
                             userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder[0][7]+"'")
                             send_text = '''
-            ---------订单消息----------
-            抱歉你的订单【%s】返利失败！
-            该订单不是通过我们的机器人购买的
+---------订单消息----------
+
+订单【%s】返利失败
+该笔订单非通过机器人购买
                             ''' % (item3)
                             user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                             user.send(send_text)
@@ -504,20 +508,20 @@ class Order:
                 # 写入返利日志
                 cm.InsertRebateLog(args2)
                 parent_user_text = '''
-    一一一一  推广信息 一一一一
+一一一一  推广信息 一一一一
 
-    您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-    回复【个人信息】查询账户信息及提成
+好友【%s】又完成一笔订单
+返利提成%s元已发放到个人账户
+回复【个人信息】可查询账户详情
                 ''' % (check_user_res[0][4], add_parent_balance)
 
                 user_text = '''
-    一一一一系统消息一一一一
+一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
-    回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
-
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
                 ''' % (orderInfo[1], add_balance)
 
 
@@ -586,13 +590,12 @@ class Order:
                 cm.InsertRebateLog(args)
 
                 user_text = '''
-    一一一一系统消息一一一一
+一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
-
-    回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
                             ''' % (orderInfo[1], add_balance)
                 cm.Close()
 
@@ -711,20 +714,20 @@ class Order:
                     cm.InsertRebateLog(args2)
 
                     parent_user_text = '''
-    一一一一  推广信息 一一一一
+一一一一  推广信息 一一一一
 
-    您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-    回复【个人信息】查询账户信息及提成
+好友【%s】又完成一笔订单
+返利提成%s元已发放到个人账户
+回复【个人信息】可查询账户详情
                             ''' % (check_user_res[0][2], add_parent_balance)
 
                     user_text = '''
-    一一一一系统消息一一一一
+一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
-
-    回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
                             ''' % (orderInfo[1], add_balance)
 
 
@@ -795,13 +798,12 @@ class Order:
                     cm.InsertRebateLog(args)
 
                     user_text = '''
-    一一一一 订单消息 一一一一
+一一一一系统消息一一一一
 
-    订单【%s】标记成功，返利金%s已发放到您的账户
-    回复【个人信息】 查看订单及返利信息
-
-    回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
                                 ''' % (orderInfo[1], add_balance)
                     cm.Close()
                     this_user.send(user_text)
@@ -915,18 +917,18 @@ class Order:
                 parent_user_text = '''
 一一一一  推广信息 一一一一
 
-您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-回复【个人信息】查询账户信息及提成
+好友【%s】又完成一笔订单
+返利提成%s元已发放到个人账户
+回复【个人信息】可查询账户详情
                         ''' % (check_user_res[0][2], add_parent_balance)
 
                 user_text = '''
 一一一一系统消息一一一一
 
-订单【%s】已完成！
-返利金%s元已发放到您的个人账户！
-
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
-回复【个人信息】可看个当前账户信息
                         ''' % (orderInfo[13], add_balance)
                 cm.Close()
                 parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
@@ -995,13 +997,12 @@ class Order:
                 cm.InsertRebateLog(args)
 
                 user_text = '''
-一一一一 订单消息 一一一一
+一一一一系统消息一一一一
 
-订单【%s】标记成功，返利金%s已发放到您的账户
-回复【个人信息】 查看订单及返利信息
-
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
-回复【个人信息】可看个当前账户信息
                             ''' % (orderInfo[13], add_balance)
                 cm.Close()
                 print(user_text)
