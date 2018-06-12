@@ -32,7 +32,7 @@ class Pdd:
                 error_text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
 京东优惠券商城：
 '''+self.config.get('URL', 'jdshop')+'''
@@ -49,7 +49,7 @@ class Pdd:
                 error_text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
 京东优惠券商城：
 '''+self.config.get('URL', 'jdshop')+'''
@@ -87,13 +87,11 @@ class Pdd:
 【优惠券】%s元
 【劵后价】%s元
 【返红包】%s元
-领券下单链接:%s
+ 领券链接:%s
 
-省钱步骤：
-1,点击链接，领取优惠券！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ self.bot.self.nick_name +"', '" + \
@@ -114,13 +112,11 @@ class Pdd:
 
 【拼多多】%s元
 【返红包】%s元
-下单链接:%s
+ 返利链接:%s
 
-省钱步骤：
-1,点击链接，进入下单！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ self.bot.self.nick_name +"', '" + arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3')"
                 cm.ExecNonQuery(insert_sql)
@@ -143,7 +139,7 @@ class Pdd:
                 error_text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
 京东优惠券商城：
 '''+self.config.get('URL', 'jdshop')+'''
@@ -160,7 +156,7 @@ class Pdd:
                 error_text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
 京东优惠券商城：
 '''+self.config.get('URL', 'jdshop')+'''
@@ -196,13 +192,11 @@ class Pdd:
 【优惠券】%s元
 【劵后价】%s元
 【返红包】%s元
-领券下单链接:%s
+ 领券链接:%s
 
-省钱步骤：
-1,点击链接，领取优惠券！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
@@ -223,13 +217,11 @@ class Pdd:
 
 【拼多多】%s元
 【返红包】%s元
-下单链接:%s
+ 返利链接:%s
 
-省钱步骤：
-1,点击链接，进入下单！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type, chatroom) VALUES('"+ self.bot.self.nick_name +"', '" + \
                              arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3', '"+ wei_info['NickName'] +"')"
@@ -397,9 +389,7 @@ class Pdd:
             sendtext = '''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功提交，请勿重复提交订单信息！
-回复【个人信息】 查看订单及返利信息
-如有疑问！请联系管理员
+订单【%s】提交成功，请勿重复提交
                         ''' % (order_id2)
             return sendtext
 
@@ -408,8 +398,7 @@ class Pdd:
         send_text ='''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功提交，请耐心等待订单结算，
-结算成功后，机器人会自动通知并返利给您
-如有疑问！请联系管理员
+订单【%s】提交成功，请耐心等待订单结算
+结算成功后机器人将自动返利到您个人账户
         ''' % (order_id2)
         return send_text

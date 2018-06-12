@@ -47,7 +47,7 @@ def taojin_init():
 
     if config.get('SYS', 'tb') == 'yes':
         print('tb...start....')
-        # al.login()
+        al.login()
 
     if config.get('SYS', 'pdd') == 'yes':
         print('pdd...start....')
@@ -99,15 +99,7 @@ def auto_accept_friends(msg):
     Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东商品优惠券，好用的话记得分享给好友哦
 
     回复【帮助】可查询指信息
-    回复【提现】申请账户余额提现
-    回复【推广】可申请机器人代理
-    回复【个人信息】可看个当前账户信息
-
-    回复【买+商品名称】
-    回复【找+商品名称】
-    回复【搜+商品名称】查看商品优惠券合集
-
-    分享【京东商品链接】或者【淘口令】
+    分享【京东商品】或者【淘口令】
     精准查询商品优惠券和返利信息！
     分享【VIP视频链接】免费查看高清VIP视频！
 
@@ -125,14 +117,6 @@ def auto_accept_friends(msg):
     '''+config.get('URL', 'lnvit')+'''
                 '''
             new_friend.send(text)
-            livit_text = '''
----- 系统消息 ----
-你成功的邀请了【%s】,
-0.3元奖励金以到账
-你永久获得该好友的购物返利红包提成
-			''' % (new_friend.nick_name)
-            print(lnivt_user.nick_name, livit_text)
-            lnivt_user.send(livit_text)
     except Exception as e:
         trace = traceback.format_exc()
         print("error:{},trace:{}".format(str(e), trace))

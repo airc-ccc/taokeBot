@@ -230,7 +230,6 @@ class Order:
 
                 # 获取用户的订单
                 user_orders = cm.ExecQuery("SELECT * FROM taojin_order WHERE status='1' AND order_source = '2' AND bot_puid='"+self.bot.self.puid+"'  AND completion_time>'"+yesterDay+"';")
-                print('user_orderfdasfsdfsdfdasfsafdsfds', user_orders)
                 user_orders_id_list = []
                 for item in user_orders:
                     user_orders_id_list.append(item[3])
@@ -257,7 +256,8 @@ class Order:
                         elif userOrder[0][7] == 3 or userOrder[0][7] == 5:
                             send_text = '''
         ---------- 订单信息 -----------
-        你的订单【%s】已失效
+        
+        订单【%s】已失效
                             ''' % (item3)
                             user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                             user.send(send_text)
@@ -270,8 +270,9 @@ class Order:
                         userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder[0][7]+"'")
                         send_text = '''
         ---------订单消息----------
-        抱歉你的订单【%s】返利失败！
-        该订单不是通过我们的机器人购买的
+        
+        订单【%s】返利失败！
+        该订单不是通过当前机器人购买
                         ''' % (item3)
                         user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                         user.send(send_text)

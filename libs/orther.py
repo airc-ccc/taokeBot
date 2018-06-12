@@ -66,7 +66,7 @@ class Orther(object):
 
             # 有邀请人时，插入用户信息，并奖励邀请人
             sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" + wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + str(wxid) + "', '"+ config.get('BN', 'bn1') +"', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ botself.puid +"', '"+res['RemarkName']+"');"
-
+            print(lnivt_info)
             # 给邀请人余额加上奖励
             jianli = round(float(lnivt_info[0][9]) + float(config.get('BN', 'bn2')), 2)
 
@@ -90,7 +90,7 @@ class Orther(object):
             }
 
             # 获取邀请人puid
-            parent_puid = self.getPuid(bot, lnivt_info[0][4])
+            parent_puid = lnivt_info[0][2]
 
             args2 = {
                 'wx_bot': bot.self.nick_name,
@@ -108,11 +108,10 @@ class Orther(object):
             lnivt_text = '''
     一一一一系统消息一一一一
 
-    您的好友【%s】已邀请成功！
-
-    '''+ config.get('BN', 'bn2') +'''元奖励金已到账
-    您将永久获得该好友永久购物返利佣金提成
-            ''' % (res['NickName'])
+    好友【'''+res['NickName']+'''】邀请成功
+    '''+ config.get('BN', 'bn2') +'''元奖励金已发放到您的个人账户
+    您将永久获得该好友购物返利百分之10的提成
+            '''
 
             cm.Close()
             # 给邀请人发消息
@@ -162,8 +161,7 @@ class Orther(object):
             return e
 
     def getPuid(self, bot, name):
-        print('namedfsafsdafsdafsda', name)
         res = bot.core.search_friends(userName=name)
-        print('fdsafsdafsd', res)
+        print(res)
         my_friends = bot.friends().search(res['NickName'])[0]
         return my_friends.puid

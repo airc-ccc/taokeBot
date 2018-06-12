@@ -50,7 +50,8 @@ class MediaJd:
         if config.get('SYS', 'jd') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持京东链接
+
+亲，暂不支持京东链接哦
                     '''
             return text
 
@@ -100,11 +101,9 @@ class MediaJd:
     【返红包】%s元
      返利链接:%s
 
-    省钱步骤：
-    1,点击链接，进入下单！
-    2,订单完成后，将订单完成日期和订单号发给我哦！
-    例如：
-    2018-01-01,12345678901
+    获取返红包步骤：
+    1,点击商品链接并进行下单
+    2,下完单复制订单号发给我
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -123,11 +122,9 @@ class MediaJd:
     【返红包】%s元
      领券链接:%s
 
-    省钱步骤：
-    1,点击链接领取优惠券，正常下单购买！
-    2,订单完成后，将订单完成日期和订单号发给我哦！
-    例如：
-    2018-01-01,12345678901
+    获取返红包步骤：
+    1,点击链接领取优惠券下单
+    2,下完单复制订单号发给我
                     ''' % (
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
@@ -145,7 +142,6 @@ class MediaJd:
 
 亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
-
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -160,7 +156,8 @@ class MediaJd:
         if config.get('SYS', 'jd') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持京东链接
+
+亲，暂不支持京东链接
                     '''
             return text
         cm = ConnectMysql()
@@ -212,8 +209,7 @@ class MediaJd:
             text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢。
-
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
@@ -478,9 +474,7 @@ class MediaJd:
             sendtext = '''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功提交，请勿重复提交订单信息！
-回复【个人信息】 查看订单及返利信息
-如有疑问！请联系管理员
+订单【%s】提交成功，请勿重复提交
                         ''' % (order_id)
             return sendtext
 
@@ -489,9 +483,8 @@ class MediaJd:
         send_text ='''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功提交，请耐心等待订单结算，
-结算成功后，机器人会自动通知并返利给您
-如有疑问！请联系管理员
+订单【%s】提交成功，请耐心等待订单结算
+结算成功后机器人将自动返利到您个人账户
         ''' % (order_id)
         return send_text
 
@@ -549,10 +542,7 @@ class MediaJd:
                     user_text = '''
     一一一一订单信息一一一一
 
-    亲，订单返利失败！
-    原因：
-    (1) 当前商品不是通过当前机器人购买的呢
-    (2) 这不是你购买的商品，不是你的订单哦
+    返利失败，订单信息有误
 
                     '''
                     return {'info': 'not_order', 'user_text': user_text}
@@ -653,18 +643,18 @@ class MediaJd:
                     parent_user_text = '''
     一一一一  推广信息 一一一一
 
-    您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-    回复【个人信息】查询账户信息及提成
+    您的好友【%s】又完成了一笔订单
+    返利提成%s元已发放到您个人账户
+    回复【个人信息】可查询账户信息
                             ''' % (check_user_res[0][2], add_parent_balance)
 
                     user_text = '''
     一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
-
+    订单【%s】已完成
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查询账户信息
     回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
                             ''' % (order_id, add_balance)
                     cm.Close()
                     return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success',
@@ -734,11 +724,10 @@ class MediaJd:
                     user_text = '''
     一一一一 订单消息 一一一一
 
-    订单【%s】标记成功，返利金%s已发放到您的账户
-    回复【个人信息】 查看订单及返利信息
-
+    订单【%s】返利成功
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查看账户详情
     回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
                                 ''' % (order_id, add_balance)
                     cm.Close()
                     return {'user_text': user_text, 'info': 'not_parent_and_success'}
