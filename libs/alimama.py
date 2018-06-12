@@ -112,20 +112,16 @@ class Alimama:
             fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
-            print('aaaaaaaaaaaaaaaa', res1)
             tao_token = res1['taoToken']
             asciistr2 = self.encrypt_oracle(tao_token)
             longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
-            print('cccccccccccccccccccccccccccc', longurl2)
             shorturl2 = self.movie.getShortUrl(longurl2)
-            print('1s11sssssssssssssssssssss', shorturl2)
 
             coupon_link = res1['couponLink' ]
             if coupon_link != "":
                 coupon_token = res1['couponLinkTaoToken']
                 asciistr = self.encrypt_oracle(coupon_token)
                 longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
-                print('ddddddddddddddddddddddddddddddddddd',longurl)
                 shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
 一一一一返利信息一一一一
@@ -234,35 +230,48 @@ class Alimama:
 
             tao_token = res1['taoToken']
             asciistr2 = self.encrypt_oracle(tao_token)
-            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + '&image=' + res['pictUrl'] + '&title=' + res['title']
+
+            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
+                'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
             shorturl2 = self.movie.getShortUrl(longurl2)
+
             coupon_link = res1['couponLink']
             if coupon_link != "":
                 coupon_token = res1['couponLinkTaoToken']
                 asciistr = self.encrypt_oracle(coupon_token)
-                longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + '&image=' + res['pictUrl'] + '&title=' + res['title']
+                longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
+                    'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
                 shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
-一一一一返利信息一一一一
+一一一一淘宝返利信息一一一一
 
 【商品名】%s元
 
 【淘宝价】%s元
 【优惠券】%s元
 【券后价】%s元
-【淘口令】%s
+【返红包】%.2f元
+【淘链接】%s
 
-点击链接,领取口令打开淘宝App领取优惠券！
-                        ''' % (q, price, coupon_amount, real_price, shorturl)
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,点击头像添加机器人好友
+3,下完单复制订单号发给我
+                                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
             else:
                 res_text = '''
-一一一一返利信息一一一一
+一一一一淘宝返利信息一一一一
 
 【商品名】%s
 【淘宝价】%s元
-【淘口令】%s
-点击链接,领取口令打开淘宝App！
-                                        ''' % (q, price, shorturl2)
+【返红包】%.2f元
+【淘链接】%s
+
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,点击头像添加机器人好友
+3,下完单复制订单号发给我
+                        ''' % (q, price, fx2, shorturl2)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()

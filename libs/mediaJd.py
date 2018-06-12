@@ -83,7 +83,7 @@ class MediaJd:
 
             if sku_arr == None:
                 if config.get('SYS', 'tl') == 'yes':
-                    msg_text = tu.tuling(msg)
+                    msg_text = self.tu.tuling(msg)
                     return msg_text
                 else:
                     return
@@ -93,17 +93,17 @@ class MediaJd:
 
             if res['data']['shotCouponUrl'] == '':
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【返红包】%s元
-     返利链接:%s
+【京东价】%s元
+【返红包】%s元
+ 返利链接:%s
 
-    获取返红包步骤：
-    1,点击商品链接并进行下单
-    2,下完单复制订单号发给我
+获取返红包步骤：
+1,点击商品链接并进行下单
+2,下完单复制订单号发给我
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -112,19 +112,19 @@ class MediaJd:
                 return text
             else:
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【优惠券】%s元
-    【券后价】%s元
-    【返红包】%s元
-     领券链接:%s
+【京东价】%s元
+【优惠券】%s元
+【券后价】%s元
+【返红包】%s元
+ 领券链接:%s
 
-    获取返红包步骤：
-    1,点击链接领取优惠券下单
-    2,下完单复制订单号发给我
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,下完单复制订单号发给我
                     ''' % (
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
@@ -173,13 +173,19 @@ class MediaJd:
             res = self.get_good_link(sku[0])
             if res['data']['shotCouponUrl'] == '':
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-     返利链接:%s
-                    ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
+【京东价】%s元
+【返红包】%s元
+ 返利链接:%s
+
+获取返红包步骤：
+1,点击商品链接并进行下单
+2,点击头像添加机器人好友
+3,下完单复制订单号发给我
+                            ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
@@ -188,17 +194,23 @@ class MediaJd:
                 return text
             else:
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【优惠券】%s元
-    【券后价】%s元
-     领券链接:%s
-                    ''' % (
-                res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
-                res['data']['shotCouponUrl'])
+【京东价】%s元
+【优惠券】%s元
+【券后价】%s元
+【返红包】%s元
+ 领券链接:%s
+
+获取返红包步骤：
+1,点击链接领取优惠券下单
+2,点击头像添加机器人好友
+3,下完单复制订单号发给我
+                                    ''' % (
+                    res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
+                    res['data']['shotCouponUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
