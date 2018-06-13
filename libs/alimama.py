@@ -9,7 +9,6 @@ import platform
 import sys
 import time
 import traceback
-import base64
 import datetime
 if sys.version_info[0] < 3:
     import urllib
@@ -20,7 +19,6 @@ import pyqrcode
 import requests
 from PIL import Image
 from threading import Thread
-from dateutil.relativedelta import relativedelta
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
 from libs.movie import SharMovie
@@ -109,7 +107,10 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) *  float(config.get('BN', 'bn3t')), 2)
+
+            # 佣金
+            yongjin = price - coupon_amount
+            fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
             tao_token = res1['taoToken']
@@ -224,7 +225,9 @@ class Alimama:
             auctionid = res['auctionId']
             coupon_amount = res['couponAmount']
             price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * float(config.get('BN', 'bn3t')), 2)
+            # 佣金
+            yongjin = price - coupon_amount
+            fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
@@ -744,7 +747,7 @@ class Alimama:
             gcid, siteid, adzoneid = self.__get_tk_link_s1(auctionid, tb_token, pvid)
             self.__get_tk_link_s2(gcid, siteid, adzoneid, auctionid, tb_token, pvid)
             res = self.__get_tk_link_s3(auctionid, adzoneid, siteid, tb_token, pvid)
-
+            print('sssssssssssssssss', res)
             return res
         except Exception as e:
             trace = traceback.format_exc()
