@@ -110,7 +110,10 @@ class Alimama:
 
             # 佣金
             yongjin = price - coupon_amount
-            fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+            if config.get('SYS', 'isHighServant') == 'yes':
+                fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+            else:
+                fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
             tao_token = res1['taoToken']
@@ -227,7 +230,10 @@ class Alimama:
             price = res['zkPrice']
             # 佣金
             yongjin = price - coupon_amount
-            fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+            if config.get('SYS', 'isHighServant') == 'yes':
+                fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+            else:
+                fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
