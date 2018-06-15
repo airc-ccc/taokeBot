@@ -30,31 +30,32 @@ class Pdd:
         t.start()
 
     def visit_main_url(self):
-        self.load_cookies()
-        url = "http://jinbao.pinduoduo.com/network/api/common/goodsList"
-        while True:
-            time.sleep(60 * 3)
-            try:
-                good_info = self.getDetail("")
+        if config.get('SYS', 'pdd') == 'yes':
+            self.load_cookies()
+            url = "http://jinbao.pinduoduo.com/network/api/common/goodsList"
+            while True:
+                time.sleep(60 * 3)
+                try:
+                    good_info = self.getDetail("")
 
-                pid = self.getPromotion()
+                    pid = self.getPromotion()
 
-                if pid['errorMsg'] == "会话已过期":
-                    # 给管理员发送登录过期消息
-                    adminuser = self.bot.friends().search(self.config.get('ADMIN', 'ADMIN_USER'))[0]
-                    text = '''
----------- 系统提醒 ----------
+                    if pid['errorMsg'] == "会话已过期":
+                        # 给管理员发送登录过期消息
+                        adminuser = self.bot.friends().search(self.config.get('ADMIN', 'ADMIN_USER'))[0]
+                        text = '''
+    ---------- 系统提醒 ----------
 
-机器人【%s】, 拼多多登录失效
-                    ''' % (self.bot.self.nick_name)
-                    adminuser.send(text)
-                print("拼多多 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-                pid = pid['result']['promotionChannelList'][0]['pid']
+    机器人【%s】, 拼多多登录失效
+                        ''' % (self.bot.self.nick_name)
+                        adminuser.send(text)
+                    print("拼多多 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                    pid = pid['result']['promotionChannelList'][0]['pid']
 
-                res = self.getLink(good_info['result']['goodsList'][0]['goodsId'], pid)
-            except Exception as e:
-                trace = traceback.format_exc()
-                print("error:{},trace:{}  拼多多登录失效 正在重新登录拼多多".format(str(e), trace))
+                    res = self.getLink(good_info['result']['goodsList'][0]['goodsId'], pid)
+                except Exception as e:
+                    trace = traceback.format_exc()
+                    print("error:{},trace:{}  拼多多登录失效 正在重新登录拼多多".format(str(e), trace))
 
     def getGood(self, raw, msg):
         cm = ConnectMysql()

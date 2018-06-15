@@ -132,7 +132,6 @@ class Order:
 
                     # 获取用户的订单
                     user_orders = cm.ExecQuery("SELECT * FROM taojin_order WHERE status='1' AND order_source = '1' AND bot_puid='"+self.bot.self.puid+"'  AND completion_time>'"+yesterDay+"';")
-                    print(user_orders)
                     user_orders_id_list = []
                     for item in user_orders:
                         user_orders_id_list.append(item[3])

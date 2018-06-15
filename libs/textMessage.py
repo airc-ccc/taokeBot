@@ -85,17 +85,14 @@ class TextMessage:
                 user_wxid = self.ort.getPuid(bot, msg['FromUserName'])
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东，拼多多商品优惠券，好用的话记得分享给好友哦
+Hi~我是24h在线的淘小券机器人
 
-回复【帮助】可查询指信息
+    分享【京东商品】
+    分享【淘口令】
+    分享【拼多多商品】
+    回复【互助】查看机器人指令
 
-分享【京东商品】【拼多多商品】【淘口令】
-查询商品优惠券
-分享【VIP视频链接】
-免费查看高清VIP视频！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
+    精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -119,17 +116,14 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
                 user_wxid = user.puid
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东，拼多多商品优惠券，好用的话记得分享给好友哦
+Hi~我是24h在线的淘小券机器人
 
-回复【帮助】可查询指信息
+    分享【京东商品】
+    分享【淘口令】
+    分享【拼多多商品】
+    回复【互助】查看机器人指令
 
-分享【京东商品】【拼多多商品】【淘口令】
-查询商品优惠券
-分享【VIP视频链接】
-免费查看高清VIP视频
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
+    精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -146,23 +140,37 @@ Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘�
 
                 # 帮助操作
                 text = '''
-Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东，拼多多商品优惠券，好用的话记得分享给好友哦
+
+Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝,天猫,京东,拼多多商品优惠券，好用的话记得分享给好友哦
 
 回复【帮助】可查询指信息
+回复【提现】申请账户余额提现
+回复【推广】可申请机器人代理
+回复【个人信息】可看个当前账户信息
 
-分享【京东商品】【拼多多商品】【淘口令】
-查询商品优惠券
-分享【VIP视频链接】
-免费查看高清VIP视频！
+回复【买+商品名称】
+回复【找+商品名称】
+回复【搜+商品名称】查看商品优惠券合集
+
+分享【京东商品】
+分享【淘宝淘口令】
+分享【拼多多商品】
+精准查询商品优惠券和返利信息！
+分享【VIP视频链接】免费查看高清VIP视频！
 
 优惠券使用教程：
-'''+config.get('URL', 'course')+'''
+http://t.cn/RnAKqWW
+跑堂优惠券常见问题：
+http://t.cn/RnAK1w0
+免费看电影方法：
+http://t.cn/RnAKMul
 京东优惠券商城：
-'''+config.get('URL', 'jdshop')+'''
+http://jdyhq.ptjob.net
 淘宝优惠券商城：
-'''+config.get('URL', 'tbshop')+'''
+http://taoquan.ptjob.net
 邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
+http://t.cn/RnAKafe
+            
                         '''
                 return text
             elif pattern_tixian.search(msg['Text']) != None:
