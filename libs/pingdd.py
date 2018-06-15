@@ -303,16 +303,15 @@ class Pdd:
 
         time.sleep(5)
 
-        wd.find_element_by_class_name('pdd-top-nav-login-btn').click()
+        wd.find_element_by_class_name('login-btn').click()
 
-        # 输入账号密码
+        # # 输入账号密码
         wd.find_element_by_id('mobile').send_keys(self.config.get('PDD', 'PDD_USERNAME'))
         # 休息3秒
         time.sleep(60)
 
         # 获取cookie并写入文件
         cookies = wd.get_cookies()
-        print(cookies)
         # 写入Cookies文件
         with open(cookie_fname, 'w') as f:
             f.write(json.dumps(cookies))
