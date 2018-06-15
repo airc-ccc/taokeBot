@@ -19,9 +19,9 @@ class Pdd:
         self.logger = my_utils.init_logger()
         self.se = requests.session()
         self.bot = bot
-        self.start_keep_cookie_thread()
         self.config = configparser.ConfigParser()
         self.config.read('config.conf',encoding="utf-8-sig")
+        self.start_keep_cookie_thread()
 
     # 启动一个线程，定时访问京拼多多，防止cookie失效
     def start_keep_cookie_thread(self):
