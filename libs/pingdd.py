@@ -30,7 +30,7 @@ class Pdd:
         t.start()
 
     def visit_main_url(self):
-        if config.get('SYS', 'pdd') == 'yes':
+        if self.config.get('SYS', 'pdd') == 'yes':
             self.load_cookies()
             url = "http://jinbao.pinduoduo.com/network/api/common/goodsList"
             while True:
