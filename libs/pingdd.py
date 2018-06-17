@@ -302,14 +302,11 @@ class Pdd:
         wd.get('http://jinbao.pinduoduo.com/#/')
 
         time.sleep(5)
-        wd.find_element_by_class_name('login-btn').click()
 
-        time.sleep(5)
-        wd.find_element_by_class_name('btn-link').click()
+        wd.find_element_by_class_name('login-btn').click()
 
         # # 输入账号密码
         wd.find_element_by_id('mobile').send_keys(self.config.get('PDD', 'PDD_USERNAME'))
-        print(wd)
         # 休息3秒
         time.sleep(60)
 
