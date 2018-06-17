@@ -2,7 +2,7 @@
 # @Author: Qinglanhui
 # @Date:   2018-04-29 17:23:01
 # @Last Modified by:   Qinglanhui
-# @Last Modified time: 2018-04-29 17:24:17
+# @Last Modified time: 2018-06-17 11:39:38
 
 # 导入模块
 import configparser
@@ -96,25 +96,20 @@ def auto_accept_friends(msg):
 
             ort.create_user_info(msg, bot, msg.raw, lnivt_code=sourc, tool=True, wxid=user_wxid, sourcname=sourcname)
             text = '''
-    Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝、京东商品优惠券，好用的话记得分享给好友哦
+Hi~我是24h在线的淘小券机器人
 
-    回复【帮助】可查询指信息
-    分享【京东商品】或者【淘口令】
-    精准查询商品优惠券和返利信息！
-    分享【VIP视频链接】免费查看高清VIP视频！
+    分享【京东商品】
+    分享【淘口令】
+    分享【拼多多商品】
+    回复【互助】查看机器人指令
 
-    优惠券使用教程：
-    '''+config.get('URL', 'course')+'''
-    跑堂优惠券常见问题：
-    '''+config.get('URL', 'faq')+'''
-    免费看电影方法：
-    '''+config.get('URL', 'movie')+'''
-    京东优惠券商城：
-    '''+config.get('URL', 'jdshop')+'''
-    淘宝优惠券商城：
-    '''+config.get('URL', 'tbshop')+'''
-    邀请好友得返利说明：
-    '''+config.get('URL', 'lnvit')+'''
+    精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
                 '''
             new_friend.send(text)
     except Exception as e:
