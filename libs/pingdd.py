@@ -303,9 +303,9 @@ class Pdd:
 
         time.sleep(5)
         wd.find_element_by_class_name('login-btn').click()
-
+        print(wd.find_element_by_class_name('login-btn'))
         time.sleep(5)
-        wd.find_element_by_class_name('btn-link').click()
+        print(wd.find_element_by_class_name('btn-link'))
 
         # # 输入账号密码
         wd.find_element_by_id('mobile').send_keys(self.config.get('PDD', 'PDD_USERNAME'))
