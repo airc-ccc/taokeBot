@@ -45,9 +45,10 @@ class Pdd:
                         text = '''
     ---------- 系统提醒 ----------
 
-    机器人【%s】, 拼多多登录失效
+    机器人【%s】, 拼多多登录失效, 正在进行重新登录！
                         ''' % (self.bot.self.nick_name)
                         adminuser.send(text)
+                        self.do_login()
                     print("拼多多 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                     pid = pid['result']['promotionChannelList'][0]['pid']
 
