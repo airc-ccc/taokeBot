@@ -6,7 +6,6 @@ import requests
 import traceback
 import datetime
 import configparser
-from bs4 import BeautifulSoup
 from threading import Thread
 from libs import my_utils
 from selenium import webdriver
@@ -300,18 +299,28 @@ class Pdd:
         else:
             wd = webdriver.Firefox()
         wd.get('http://jinbao.pinduoduo.com/#/')
-
         time.sleep(5)
         wd.find_element_by_class_name('login-btn').click()
-        print(wd.find_element_by_class_name('login-btn'))
-        time.sleep(5)
-        print(wd.find_element_by_class_name('btn-link'))
 
-        # # 输入账号密码
+        time.sleep(4)
+
+        span = wd.find_element_by_xpath("//div[@class='sign-up-link']/span")
+
+        span.click()
+
+        time.sleep(5)
+
         wd.find_element_by_id('mobile').send_keys(self.config.get('PDD', 'PDD_USERNAME'))
-        print(wd)
-        # 休息3秒
-        time.sleep(60)
+
+        password = wd.find_element_by_xpath("//div[@class='pdd-modal-body']/div[3]/div/input[2]")
+
+        password.send_keys(self.config.get('PDD', 'PDD_PASSWORD'))
+
+        loginBut = wd.find_element_by_xpath("//div[@class='pdd-modal-body']/div[7]/span")
+
+        loginBut.click()
+
+        time.sleep(5)
 
         # 获取cookie并写入文件
         cookies = wd.get_cookies()
