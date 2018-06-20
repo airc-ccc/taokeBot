@@ -55,5 +55,4 @@ class SharMovie(object):
         res = requests.get(url)
 
         rj = json.loads(res.text)
-        print(rj)
         return rj['short_url']

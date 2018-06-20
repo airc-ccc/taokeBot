@@ -59,14 +59,10 @@ class TextMessage:
                 if res['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
-
-                tburl = quote("http://taoquan.ptjob.net/index.php?kw=" + msg['Text'][1:], safe='/:?=&')
-                print(tburl)
+                jdurl = quote(config.get('URL', 'jdshopingurl') + msg['Text'][1:], safe='/:?=&')
+                tburl = quote(config.get('URL', 'tbshopingurl') + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
-                print(res2)
-                print(111111)
                 text = '''
 一一一一系统消息一一一一
 亲,以下是【%s】优惠券集合
@@ -122,7 +118,7 @@ Hi~我是24h在线的淘小券机器人
     分享【淘口令】
     分享【拼多多商品】
     回复【互助】查看机器人指令
-
+    
     精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
@@ -180,10 +176,7 @@ http://t.cn/RnAKafe
                 if res['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                print(config.get('ADMIN', 'ADMIN_USER'))
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
-                print(adminuser)
-                # try:
                 select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid+"';"
                 select_user_res = cm.ExecQuery(select_user_sql)
                 timestr = round(time.time())
@@ -191,12 +184,10 @@ http://t.cn/RnAKafe
                 if float(select_user_res[0][9]) > 0:
                     # 修改余额
                     update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0', update_time='"+ timestr2 +"' WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+ bot.self.puid +"';"
-                    print(update_sql)
                     total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
                     update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + repr(total_amount) + "',update_time='" + timestr2 + "' WHERE puid='"+raw.sender.puid +"' AND bot_puid='"+ bot.self.puid +"';"
                     # 插入提现日志
                     insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + repr(select_user_res[0][9]) + "', '" + timestr2 + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
-                    print(insert_current_log_sql)
                     to_admin_text = '''
 一一一一 提现通知 一一一一
 
@@ -215,10 +206,9 @@ http://t.cn/RnAKafe
                     to_user_text = '''
 一一一一 提现信息 一一一一
 
-提现成功
+恭喜你成功提现【%s】元
 提现金额将以微信红包发放，请耐心等待
-                                    '''
-                    print(to_user_text)
+                                    ''' % (select_user_res[0][9])
                     adminuser.send(to_admin_text)
                     return to_user_text
                 else:
@@ -228,15 +218,6 @@ http://t.cn/RnAKafe
 提现申请失败，账户余额为0！
                                     '''
                     return text2
-                # except Exception as e:
-                #     trace = traceback.format_exc()
-                #     print("error:{},trace:{}  京东登录失效 正在重新登录京东".format(str(e), trace))
-                #     text1 = '''
-# 一一一一 系统信息 一一一一
-#
-# 提现失败，请稍后重试！
-#                             '''
-#                     return text1
             elif pattern_profile.search(msg['Text']) != None:
                 cm = ConnectMysql()
                 res = self.ort.ishaveuserinfo(bot, msg, raw)
@@ -256,7 +237,6 @@ http://t.cn/RnAKafe
                     current_info = 0
                 else:
                     current_info = current_info[0][0]
-                print(user_info, current_info)
                 text = '''
 一一一一 个人信息 一一一一
 
@@ -324,7 +304,6 @@ http://t.cn/RnAKafe
                 return res
             elif (msg['Text'].isdigit()) and (len(msg['Text']) == 18):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-                print(res2)
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
@@ -333,7 +312,6 @@ http://t.cn/RnAKafe
                 return res
             elif ('-' in msg['Text']) and (len(msg['Text'].split('-')[1]) == 15) and (len(msg['Text']) == 22):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-                print(res2)
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
@@ -374,7 +352,6 @@ http://t.cn/RnAKafe
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
                 tburl = quote('http://taoquan.ptjob.net/index.php?kw=' + msg['Text'][1:], safe='/:?=&')
-                print(tburl)
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''

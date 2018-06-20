@@ -63,7 +63,6 @@ class MediaJd:
                 se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
                 if se.search(raw.sender.remark_name) == None:
                     remarkName = self.ort.generateRemarkName(bot)
-                    print(remarkName)
                     split_arr2 = remarkName.split('_')
                     new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -238,7 +237,6 @@ class MediaJd:
         while True:
             time.sleep(60 * 3)
             try:
-                print("京东 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 # 搜索商品
                 res = self.se.get(url)
                 # 使用BeautifulSoup解析HTML，并提取属性数据
@@ -304,7 +302,6 @@ class MediaJd:
 
     def login(self):
         clr = self.check_login()
-        print(clr)
         if 'Login Success' in clr:
             print('京东已登录！不需要再次登录！')
             return 'Login Success'

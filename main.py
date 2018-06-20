@@ -64,8 +64,9 @@ def text(msg):
 @bot.register(Group)
 def group_text(msg):
     print(msg)
-    res = wb.check_if_is_group(msg.raw, bot, msg)
-    msg.reply(res)
+    if config.get('SYS', 'groupReply') == 'yes':
+        res = wb.check_if_is_group(msg.raw, bot, msg)
+        msg.reply(res)
 
 # # 自动通过好友验证
 @bot.register(msg_types = FRIENDS)

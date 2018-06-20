@@ -49,7 +49,6 @@ class Alimama:
         return a
 
     def getTao(self, bot, msg, raw):
-        print(msg, '41')
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
@@ -66,7 +65,6 @@ class Alimama:
                     url = None
 
             else:
-                print(msg, '58')
                 try:
                     url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
                 except:
@@ -80,7 +78,6 @@ class Alimama:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
                 elif '€' in msg['Text']:
                     taokouling = re.search(r'€.*?€', msg['Text']).group()
-                print(taokouling)
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -88,7 +85,6 @@ class Alimama:
             real_url = self.get_real_url(url)
 
             res = self.get_detail(bot, real_url, raw)
-            print(res)
             if res == 'no match item':
                 text = '''
 一一一一 返利信息 一一一一
@@ -328,7 +324,6 @@ class Alimama:
         while True:
             time.sleep(60 * 5)
             try:
-                print("淘宝 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 self.get_url(url, headers)
                 real_url = "https://detail.tmall.com/item.htm?id=42485910384"
                 res = self.get_detail2(real_url)
@@ -339,7 +334,7 @@ class Alimama:
                 text = '''
                 ---------- 系统提醒 ----------
 
-                机器人【%s】, 拼多多登录失效
+                机器人【%s】, 淘宝登录失效
                                     ''' % (self.bot.self.nick_name)
                 adminuser.send(text)
                 trace = traceback.format_exc()
@@ -563,7 +558,6 @@ class Alimama:
                 self.logger.debug('login success')
                 # self.logger.debug(self.se.cookies)
                 with open(cookie_fname, 'w') as f:
-                    print(self.se.cookies.items())
                     f.write(json.dumps(self.se.cookies.items()))
                 return 'login success'
             # 二维码过一段时间会失效
@@ -587,7 +581,6 @@ class Alimama:
                     return 'login success'
         except Exception as e:
             trace = traceback.format_exc()
-            print("{},{}".format(str(e), trace))
             return 'login failed'
 
     def open_do_login(self):
@@ -645,14 +638,12 @@ class Alimama:
             bower.find_element_by_id(element)
             return True
         except Exception as e:
-            print(e)
             return False
 
     def get_tb_token(self):
         tb_token = None
         for c in self.se.cookies.items():
             if c[0] == '_tb_token_':
-                print('淘宝token', c[1])
                 return c[1]
         if tb_token is None:
             return 'test'
@@ -753,7 +744,6 @@ class Alimama:
             gcid, siteid, adzoneid = self.__get_tk_link_s1(auctionid, tb_token, pvid)
             self.__get_tk_link_s2(gcid, siteid, adzoneid, auctionid, tb_token, pvid)
             res = self.__get_tk_link_s3(auctionid, adzoneid, siteid, tb_token, pvid)
-            print('sssssssssssssssss', res)
             return res
         except Exception as e:
             trace = traceback.format_exc()
@@ -763,7 +753,6 @@ class Alimama:
     def __get_tk_link_s1(self, auctionid, tb_token, pvid):
         url = 'http://pub.alimama.com/common/adzone/newSelfAdzone2.json?tag=29&itemId=%s&blockId=&t=%s&_tb_token_=%s&pvid=%s' % (
             auctionid, int(time.time() * 1000), tb_token, pvid)
-        print(url)
         headers = {
             'Host': 'pub.alimama.com',
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -775,7 +764,6 @@ class Alimama:
         }
         res = self.get_url(url, headers)
         rj = res.json()
-        # self.logger.debug(rj)
         gcid = rj['data']['otherList'][0]['gcid']
         siteid = rj['data']['otherList'][0]['siteid']
         adzoneid = rj['data']['otherAdzones'][0]['sub'][0]['id']

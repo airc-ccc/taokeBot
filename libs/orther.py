@@ -66,7 +66,6 @@ class Orther(object):
 
             # 有邀请人时，插入用户信息，并奖励邀请人
             sql = "INSERT INTO taojin_user_info(wx_bot, puid, sex, nickname, lnivt_code, withdrawals_amount, lnivter, create_time, bot_puid, remarkname) VALUES('"+ bot.self.nick_name +"', '" + wxid + "', '" + str(res['Sex']) + "', '" + res['NickName'] + "', '" + str(wxid) + "', '"+ config.get('BN', 'bn1') +"', '" + str(lnivt_code) + "', '" + str(round(time.time())) + "', '"+ botself.puid +"', '"+res['RemarkName']+"');"
-            print(lnivt_info)
             # 给邀请人余额加上奖励
             jianli = round(float(lnivt_info[0][9]) + float(config.get('BN', 'bn2')), 2)
 
@@ -162,6 +161,5 @@ class Orther(object):
 
     def getPuid(self, bot, name):
         res = bot.core.search_friends(userName=name)
-        print(res)
         my_friends = bot.friends().search(res['NickName'])[0]
         return my_friends.puid
