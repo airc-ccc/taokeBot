@@ -87,7 +87,7 @@ class Order:
         if self.config.get('SYS', 'tb') == 'yes':
             while True:
                 nowtime = time.strftime('%H:%M', time.localtime(time.time()))
-                if self.config.get('TIME', 'pddend') > nowtime > self.config.get('TIME', 'pddstart'):
+                if self.config.get('TIME', 'tbend') > nowtime > self.config.get('TIME', 'tbstart'):
                     print('tb start .............')
                     cm = ConnectMysql()
                     self.load_cookies(c_tb_file, self.tb_se)
@@ -111,21 +111,21 @@ class Order:
                     status = { '订单结算': 1, '订单付款': 2, '订单失效': 3, '订单成功': 4 }
 
                     lists = []
-                    for i  in range(0, sheet.nrows):
+                    for i in range(0, sheet.nrows):
                         if i > 0:
                             value = sheet.row_values(i)
-                            is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='"+value[24]+"';"
+                            is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='"+value[25]+"';"
                             # 判断数据是否存在
                             is_ext = cm.ExecQuery(is_sql)
                             if is_ext == ():
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid)\
-                                VALUES('"+value[24]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
+                                VALUES('"+value[25]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
                                 cm.ExecNonQuery(in_sql)
                             else:
-                                del_sql = "DELETE FROM taojin_get_orders WHERE order_id='"+value[24]+"';"
+                                del_sql = "DELETE FROM taojin_get_orders WHERE order_id='"+value[25]+"';"
                                 cm.ExecNonQuery(del_sql)
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid)\
-                                VALUES('"+value[24]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
+                                VALUES('"+value[25]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
                                 cm.ExecNonQuery(in_sql)
                             lists.append(value)
 
@@ -137,7 +137,7 @@ class Order:
 
                     orders_list =[]
                     for item2 in lists:
-                        orders_list.append(item2[24])
+                        orders_list.append(item2[25])
                     for item3 in user_orders_id_list:
                         if item3 in orders_list:
                             userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE order_id="+item3+"")
@@ -174,7 +174,7 @@ class Order:
                             user.send(send_text)
                     time.sleep(7200)
                 else:
-                    print('tb time not start .......')
+                    print('tb time not start, now time is %s .......' % nowtime)
                     time.sleep(1800)
                     continue
 
