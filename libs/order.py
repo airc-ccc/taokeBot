@@ -87,13 +87,12 @@ class Order:
         if self.config.get('SYS', 'tb') == 'yes':
             while True:
                 nowtime = time.strftime('%H:%M', time.localtime(time.time()))
-                if self.config.get('TIME', 'pddend') > nowtime > self.config.get('TIME', 'pddstart'):
+                if self.config.get('TIME', 'tbend') > nowtime > self.config.get('TIME', 'tbstart'):
                     print('tb start .............')
                     cm = ConnectMysql()
                     self.load_cookies(c_tb_file, self.tb_se)
                     # 获取前一天的时间
                     yesterDay = str(datetime.date.today() - datetime.timedelta(days=60))
-                    print(yesterDay)
                     getUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?DownloadID=DOWNLOAD_REPORT_INCOME_NEW&queryType=1&payStatus=&startTime="+yesterDay+"&endTime="+str(datetime.date.today())+""
 
                     res = self.tb_se.get(getUrl)
@@ -112,21 +111,21 @@ class Order:
                     status = { '订单结算': 1, '订单付款': 2, '订单失效': 3, '订单成功': 4 }
 
                     lists = []
-                    for i  in range(0, sheet.nrows):
+                    for i in range(0, sheet.nrows):
                         if i > 0:
                             value = sheet.row_values(i)
-                            is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='"+value[24]+"';"
+                            is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='"+value[25]+"';"
                             # 判断数据是否存在
                             is_ext = cm.ExecQuery(is_sql)
                             if is_ext == ():
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid)\
-                                VALUES('"+value[24]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
+                                VALUES('"+value[25]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
                                 cm.ExecNonQuery(in_sql)
                             else:
-                                del_sql = "DELETE FROM taojin_get_orders WHERE order_id='"+value[24]+"';"
+                                del_sql = "DELETE FROM taojin_get_orders WHERE order_id='"+value[25]+"';"
                                 cm.ExecNonQuery(del_sql)
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid)\
-                                VALUES('"+value[24]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
+                                VALUES('"+value[25]+"', '"+value[3]+"', '"+value[2]+"', '"+str(value[7])+"', '"+str(value[6])+"', '"+str(value[12])+"', '1', '"+str(status[value[8]])+"', '"+str(value[18])+"', '"+value[0]+"', '"+value[16]+"', '"+self.bot.self.puid+"')"
                                 cm.ExecNonQuery(in_sql)
                             lists.append(value)
 
@@ -138,19 +137,17 @@ class Order:
 
                     orders_list =[]
                     for item2 in lists:
-                        orders_list.append(item2[24])
+                        orders_list.append(item2[25])
                     for item3 in user_orders_id_list:
                         if item3 in orders_list:
                             userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE order_id="+item3+"")
                             userOrder2 = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id="+item3+"")
                             userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder2[0][7]+"'")
-                            print(item3)
                             # 根据订单状态进行回复和结算奖金
                             if userOrder[0][7] == 4 or userOrder[0][7] == 1:
                                 # 已结算
                                 self.changeInfoAlimama(userOrder2[0][7], userOrder[0], self.bot)
                                 up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                                print(up_set_sql)
                                 cm.ExecNonQuery(up_set_sql)
                             elif userOrder[0][7] == 3:
                                 send_text = '''
@@ -159,7 +156,6 @@ class Order:
     订单【%s】已失效
                                 ''' % (item3)
                                 up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                                print(up_set_sql)
                                 cm.ExecNonQuery(up_set_sql)
                                 user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                                 user.send(send_text)
@@ -173,13 +169,12 @@ class Order:
     该笔订单非通过机器人购买
                             ''' % (item3)
                             up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                            print(up_set_sql)
                             cm.ExecNonQuery(up_set_sql)
                             user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
                             user.send(send_text)
                     time.sleep(7200)
                 else:
-                    print('tb time not start .......')
+                    print('tb time not start, now time is %s .......' % nowtime)
                     time.sleep(1800)
                     continue
 
@@ -221,7 +216,6 @@ class Order:
                                 if is_ext == ():
                                     in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid)\
                                     VALUES('"+value[1].split(',')[1]+"', '"+value[2].split(',')[1]+"', '"+str(value[3].split(',')[1])+"', '"+str(value[4].split(',')[1])+"', '"+str(value[5].split(',')[1])+"', '"+str(value[17].split(',')[1])+"', '2', '"+str(status_in)+"', '"+str(value[18].split(',')[1])+"', '"+value[0]+"', '"+str(value[19].split(',')[1])+"', '"+self.bot.self.puid+"')"
-                                    print(in_sql)
                                     cm.ExecNonQuery(in_sql)
                                 else:
                                     del_sql = "DELETE FROM taojin_get_orders WHERE order_id='"+value[1].split(',')[1]+"';"
@@ -246,10 +240,8 @@ class Order:
                             userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE order_id="+item3+"")
                             userOrder2 = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id="+item3+"")
                             userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder2[0][7]+"'")
-                            print(item3)
                             # 根据订单状态进行回复和结算奖金
                             if userOrder[0][7] == 4 or userOrder[0][7] == 1:
-                                print(userOrder)
                                 # 已完成
                                 self.changeInfoJd(userOrder2[0][7], userOrder[0], self.bot)
                                 up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
@@ -321,16 +313,13 @@ class Order:
                     if rj['success']:
                         # 成功
                         data = rj['result']['list']
-                        print(data)
                         status = { '已支付待成团': 2, '已成团': 2, '已收货': 1, '审核失败': 3, '审核通过': 4 }
                         # 把订单插入数据库
                         for value in data:
                             is_sql = "SELECT * FROM taojin_get_orders WHERE pdd_order_id='"+value['orderSn']+"'" \
                                                                                                              ";"
-                            print(is_sql)
                             # 判断数据是否存在
                             is_ext = cm.ExecQuery(is_sql)
-                            print('isiisisisisisisisisisis', is_ext)
                             status_in = status[value['orderStatusDesc']]
                             if is_ext == ():
                                 if value['verifyTime']:
@@ -343,11 +332,9 @@ class Order:
                                 create_time = time.strftime("%Y--%m--%d %H:%M:%S", time.localtime(b))
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid, pdd_order_id)\
                                 VALUES('123456', '"+str(value['goodsId'])+"', '"+value['goodsName']+"', '"+str(value['goodsPrice'] / 100)+"', '"+str(value['goodsQuantity'])+"', '"+str(value['orderAmount'] / 100)+"', '3', '"+str(status_in)+"', '"+str(value['promotionAmount'] / 100)+"', '"+str(create_time)+"', '"+str(verify_time)+"', '"+self.bot.self.puid+"', '"+value['orderSn']+"')"
-                                print(in_sql)
                                 cm.ExecNonQuery(in_sql)
                             else:
                                 del_sql = "DELETE FROM taojin_get_orders WHERE pdd_order_id='"+value['orderSn']+"';"
-                                print(del_sql)
                                 cm.ExecNonQuery(del_sql)
                                 if value['verifyTime']:
                                     a = int(str(value['verifyTime'])[0:-3])
@@ -358,7 +345,6 @@ class Order:
                                 create_time = time.strftime("%Y--%m--%d %H:%M:%S", time.localtime(b))
                                 in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid, pdd_order_id)\
                                 VALUES('123456', '"+str(value['goodsId'])+"', '"+value['goodsName']+"', '"+str(value['goodsPrice'] / 100)+"', '"+str(value['goodsQuantity'])+"', '"+str(value['orderAmount'] / 100)+"', '3', '"+str(status_in)+"', '"+str(value['promotionAmount'] / 100)+"', '"+str(create_time)+"', '"+str(verify_time)+"', '"+self.bot.self.puid+"', '"+value['orderSn']+"')"
-                                print(in_sql)
                                 cm.ExecNonQuery(in_sql)
 
 
@@ -376,15 +362,12 @@ class Order:
 
                         for item3 in user_orders_id_list:
                             if item3 in get_orders_list:
-                                print(item3)
                                 userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE pdd_order_id='"+item3+"'")
                                 userOrder2 = cm.ExecQuery("SELECT * FROM taojin_order WHERE pdd_order_id='"+item3+"'")
                                 userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder2[0][7]+"'")
-                                print(userOrder)
                                 # 根据订单状态进行回复和结算奖金
                                 if userOrder[0][7] == 1:
                                     # 已完成
-                                    print(userOrder)
                                     self.changeInfoPdd(userOrder2[0][7], userOrder[0], self.bot)
                                 elif userOrder[0][7] == 3 or userOrder[0][7] == 5:
                                     send_text = '''
@@ -396,7 +379,6 @@ class Order:
                                     user.send(send_text)
                             else:
                                 userOrder = cm.ExecQuery("SELECT * FROM taojin_order WHERE pdd_order_id='"+item3+"'")
-                                print(userOrder)
                                 userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='"+userOrder[0][7]+"'")
                                 send_text = '''
     ---------订单消息----------
@@ -614,7 +596,6 @@ class Order:
             check_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';"
             check_user_res = cm.ExecQuery(check_user_sql)
             this_user = self.bot.friends().search(nick_name=check_user_res[0][4])[0]
-            print('this_user', this_user.remark_name)
             # 判断是否已经有个人账户，没有返回信息
             if len(check_user_res) < 1:
                 cm.Close()
@@ -1006,7 +987,6 @@ class Order:
 回复【提现】可申请账户余额提现
                             ''' % (orderInfo[13], add_balance)
                 cm.Close()
-                print(user_text)
                 this_user.send(user_text)
         except Exception as e:
             trace = traceback.format_exc()

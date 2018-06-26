@@ -49,7 +49,6 @@ class Pdd:
                         ''' % (self.bot.self.nick_name)
                         adminuser.send(text)
                         self.do_login()
-                    print("拼多多 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                     pid = pid['result']['promotionChannelList'][0]['pid']
 
                     res = self.getLink(good_info['result']['goodsList'][0]['goodsId'], pid)
@@ -126,7 +125,7 @@ class Pdd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
 
@@ -151,7 +150,7 @@ class Pdd:
  返利链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ self.bot.self.nick_name +"', '" + arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3')"
@@ -231,7 +230,7 @@ class Pdd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,点击头像添加机器人好友
 3,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
@@ -419,17 +418,12 @@ class Pdd:
     def order_pdd(self, bot, msg, orderId, userInfo, puid, raw):
         order_id = orderId
         order_id2 = msg['Text']
-        print(order_id2)
         timestr = datetime.datetime.now().strftime('%Y-%m-%d %H:%I:%S')
-        print(timestr)
         cm = ConnectMysql()
 
         # 查询订单是否已经提现过了
-        print('ssssssss')
         check_order_sql = "SELECT * FROM taojin_order WHERE pdd_order_id='" + str(order_id2) + "' AND bot_puid='"+ bot.self.puid +"' AND puid='"+puid+"';"
-        print(check_order_sql)
         check_order_res = cm.ExecQuery(check_order_sql)
-        print('388')
         # 判断该订单是否已经提现
         if len(check_order_res) >= 1:
             cm.Close()
@@ -441,7 +435,6 @@ class Pdd:
             return sendtext
 
         cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status, pdd_order_id) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '3', '"+puid+"', '"+ bot.self.puid +"', '1', '"+ str(order_id2) +"')")
-        print('dfsaaaaaaaaaaaaaaaaaaaaa')
         send_text ='''
 一一一一 订单消息 一一一一
 

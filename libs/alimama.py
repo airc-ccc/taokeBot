@@ -6,6 +6,7 @@ import json
 import os.path
 import configparser
 import platform
+import random
 import sys
 import time
 import traceback
@@ -49,7 +50,6 @@ class Alimama:
         return a
 
     def getTao(self, bot, msg, raw):
-        print(msg, '41')
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
@@ -66,7 +66,6 @@ class Alimama:
                     url = None
 
             else:
-                print(msg, '58')
                 try:
                     url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
                 except:
@@ -80,7 +79,6 @@ class Alimama:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
                 elif '€' in msg['Text']:
                     taokouling = re.search(r'€.*?€', msg['Text']).group()
-                print(taokouling)
                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
                 res = requests.post(taokoulingurl, data=parms)
                 url = res.json()['url'].replace('https://', 'http://')
@@ -88,7 +86,6 @@ class Alimama:
             real_url = self.get_real_url(url)
 
             res = self.get_detail(bot, real_url, raw)
-            print(res)
             if res == 'no match item':
                 text = '''
 一一一一 返利信息 一一一一
@@ -116,17 +113,21 @@ class Alimama:
                 fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
-            tao_token = res1['taoToken']
-            asciistr2 = self.encrypt_oracle(tao_token)
-            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
-            shorturl2 = self.movie.getShortUrl(longurl2)
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
+            # asciistr2 = self.encrypt_oracle(tao_token)
+            # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+            # shorturl2 = self.movie.getShortUrl(longurl2)
 
-            coupon_link = res1['couponLink' ]
+            coupon_link = res1['couponLink']
             if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                asciistr = self.encrypt_oracle(coupon_token)
-                longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
-                shorturl = self.movie.getShortUrl(longurl)
+                coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+                coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+                # asciistr = self.encrypt_oracle(coupon_token)
+                # longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+                # shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
 一一一一返利信息一一一一
 
@@ -139,9 +140,9 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
-                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
+                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
             else:
                 res_text = '''
 一一一一返利信息一一一一
@@ -152,9 +153,9 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
-                                        ''' % (q, price, fx2, shorturl2)
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
+                                        ''' % (q, price, fx2, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -237,20 +238,28 @@ class Alimama:
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
-            tao_token = res1['taoToken']
-            asciistr2 = self.encrypt_oracle(tao_token)
+            # tao_token = res1['taoToken']
+            # asciistr2 = self.encrypt_oracle(tao_token)
+            #
+            # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
+            #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+            # shorturl2 = self.movie.getShortUrl(longurl2)
 
-            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
-                'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
-            shorturl2 = self.movie.getShortUrl(longurl2)
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
 
             coupon_link = res1['couponLink']
             if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                asciistr = self.encrypt_oracle(coupon_token)
-                longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
-                    'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
-                shorturl = self.movie.getShortUrl(longurl)
+                # coupon_token = res1['couponLinkTaoToken']
+                # asciistr = self.encrypt_oracle(coupon_token)
+                # longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
+                #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+                # shorturl = self.movie.getShortUrl(longurl)
+                coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+                coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+
                 res_text = '''
 一一一一淘宝返利信息一一一一
 
@@ -263,10 +272,10 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,点击头像添加机器人好友
-3,下完单复制订单号发给我
-                                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人为好友
+3,下完单后复制订单号发给我
+                                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
             else:
                 res_text = '''
 一一一一淘宝返利信息一一一一
@@ -277,10 +286,10 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,点击头像添加机器人好友
-3,下完单复制订单号发给我
-                        ''' % (q, price, fx2, shorturl2)
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人为好友
+3,下完单后复制订单号发给我
+                        ''' % (q, price, fx2, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -328,7 +337,6 @@ class Alimama:
         while True:
             time.sleep(60 * 5)
             try:
-                print("淘宝 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 self.get_url(url, headers)
                 real_url = "https://detail.tmall.com/item.htm?id=42485910384"
                 res = self.get_detail2(real_url)
@@ -339,7 +347,7 @@ class Alimama:
                 text = '''
                 ---------- 系统提醒 ----------
 
-                机器人【%s】, 拼多多登录失效
+                机器人【%s】, 淘宝登录失效
                                     ''' % (self.bot.self.nick_name)
                 adminuser.send(text)
                 trace = traceback.format_exc()
@@ -563,7 +571,6 @@ class Alimama:
                 self.logger.debug('login success')
                 # self.logger.debug(self.se.cookies)
                 with open(cookie_fname, 'w') as f:
-                    print(self.se.cookies.items())
                     f.write(json.dumps(self.se.cookies.items()))
                 return 'login success'
             # 二维码过一段时间会失效
@@ -587,7 +594,6 @@ class Alimama:
                     return 'login success'
         except Exception as e:
             trace = traceback.format_exc()
-            print("{},{}".format(str(e), trace))
             return 'login failed'
 
     def open_do_login(self):
@@ -645,14 +651,12 @@ class Alimama:
             bower.find_element_by_id(element)
             return True
         except Exception as e:
-            print(e)
             return False
 
     def get_tb_token(self):
         tb_token = None
         for c in self.se.cookies.items():
             if c[0] == '_tb_token_':
-                print('淘宝token', c[1])
                 return c[1]
         if tb_token is None:
             return 'test'
@@ -753,7 +757,6 @@ class Alimama:
             gcid, siteid, adzoneid = self.__get_tk_link_s1(auctionid, tb_token, pvid)
             self.__get_tk_link_s2(gcid, siteid, adzoneid, auctionid, tb_token, pvid)
             res = self.__get_tk_link_s3(auctionid, adzoneid, siteid, tb_token, pvid)
-            print('sssssssssssssssss', res)
             return res
         except Exception as e:
             trace = traceback.format_exc()
@@ -763,7 +766,6 @@ class Alimama:
     def __get_tk_link_s1(self, auctionid, tb_token, pvid):
         url = 'http://pub.alimama.com/common/adzone/newSelfAdzone2.json?tag=29&itemId=%s&blockId=&t=%s&_tb_token_=%s&pvid=%s' % (
             auctionid, int(time.time() * 1000), tb_token, pvid)
-        print(url)
         headers = {
             'Host': 'pub.alimama.com',
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -775,7 +777,6 @@ class Alimama:
         }
         res = self.get_url(url, headers)
         rj = res.json()
-        # self.logger.debug(rj)
         gcid = rj['data']['otherList'][0]['gcid']
         siteid = rj['data']['otherList'][0]['siteid']
         adzoneid = rj['data']['otherAdzones'][0]['sub'][0]['id']
@@ -978,7 +979,7 @@ class Alimama:
     一一一一订单信息一一一一
 
     返利失败，订单信息有误
-    
+
                     '''
                     return {'info': 'not_order', 'user_text': user_text}
 

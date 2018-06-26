@@ -36,7 +36,6 @@ class tbAndJd(object):
             if res['res'] == 'not_info':
                 # 不存在就去创建
                 self.ort.create_user_info(raw, bot, msg, 0, tool=False)
-            print('fdasfsaffdsa',msg)
             # 调用淘宝获取商品优惠信息
             return self.al.getTao(bot, msg, raw)
         elif msg['Type'] == 'Sharing':  # 分享型消息

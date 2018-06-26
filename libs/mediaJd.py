@@ -63,7 +63,6 @@ class MediaJd:
                 se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
                 if se.search(raw.sender.remark_name) == None:
                     remarkName = self.ort.generateRemarkName(bot)
-                    print(remarkName)
                     split_arr2 = remarkName.split('_')
                     new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
@@ -103,7 +102,7 @@ class MediaJd:
 
 获取返红包步骤：
 1,点击商品链接并进行下单
-2,下完单复制订单号发给我
+2,下完单后复制订单号发给我
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -123,8 +122,8 @@ class MediaJd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
                     ''' % (
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
@@ -184,7 +183,7 @@ class MediaJd:
 获取返红包步骤：
 1,点击商品链接并进行下单
 2,点击头像添加机器人好友
-3,下完单复制订单号发给我
+3,下完单后复制订单号发给我
                             ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -205,9 +204,9 @@ class MediaJd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,点击头像添加机器人好友
-3,下完单复制订单号发给我
+3,下完单后复制订单号发给我
                                     ''' % (
                     res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                     res['data']['shotCouponUrl'])
@@ -238,7 +237,6 @@ class MediaJd:
         while True:
             time.sleep(60 * 3)
             try:
-                print("京东 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 # 搜索商品
                 res = self.se.get(url)
                 # 使用BeautifulSoup解析HTML，并提取属性数据
@@ -304,7 +302,6 @@ class MediaJd:
 
     def login(self):
         clr = self.check_login()
-        print(clr)
         if 'Login Success' in clr:
             print('京东已登录！不需要再次登录！')
             return 'Login Success'
