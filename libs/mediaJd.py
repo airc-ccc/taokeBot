@@ -102,7 +102,7 @@ class MediaJd:
 
 获取返红包步骤：
 1,点击商品链接并进行下单
-2,下完单复制订单号发给我
+2,下完单后复制订单号发给我
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -122,8 +122,8 @@ class MediaJd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
                     ''' % (
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
@@ -183,7 +183,7 @@ class MediaJd:
 获取返红包步骤：
 1,点击商品链接并进行下单
 2,点击头像添加机器人好友
-3,下完单复制订单号发给我
+3,下完单后复制订单号发给我
                             ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
@@ -204,9 +204,9 @@ class MediaJd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,点击头像添加机器人好友
-3,下完单复制订单号发给我
+3,下完单后复制订单号发给我
                                     ''' % (
                     res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                     res['data']['shotCouponUrl'])

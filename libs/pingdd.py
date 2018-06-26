@@ -125,7 +125,7 @@ class Pdd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])
 
@@ -150,7 +150,7 @@ class Pdd:
  返利链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, backPrice, res['result']['shortUrl'])
                 insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ self.bot.self.nick_name +"', '" + arr2[0] + "', '" + str(minGroupPrice) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ self.bot.self.puid +"', '"+ str(good) +"', '3')"
@@ -230,7 +230,7 @@ class Pdd:
  领券链接:%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
+1,复制本条消息打开淘宝领券
 2,点击头像添加机器人好友
 3,下单后复制订单号发给我
                     ''' % (arr2[0], minGroupPrice, coupon, couponPrice, backPrice, res['result']['shortUrl'])

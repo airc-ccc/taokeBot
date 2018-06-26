@@ -6,6 +6,7 @@ import json
 import os.path
 import configparser
 import platform
+import random
 import sys
 import time
 import traceback
@@ -112,17 +113,21 @@ class Alimama:
                 fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
-            tao_token = res1['taoToken']
-            asciistr2 = self.encrypt_oracle(tao_token)
-            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
-            shorturl2 = self.movie.getShortUrl(longurl2)
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
+            # asciistr2 = self.encrypt_oracle(tao_token)
+            # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+            # shorturl2 = self.movie.getShortUrl(longurl2)
 
-            coupon_link = res1['couponLink' ]
+            coupon_link = res1['couponLink']
             if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                asciistr = self.encrypt_oracle(coupon_token)
-                longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
-                shorturl = self.movie.getShortUrl(longurl)
+                coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+                coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+                # asciistr = self.encrypt_oracle(coupon_token)
+                # longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+                # shorturl = self.movie.getShortUrl(longurl)
                 res_text = '''
 一一一一返利信息一一一一
 
@@ -135,9 +140,9 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
-                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
+                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
             else:
                 res_text = '''
 一一一一返利信息一一一一
@@ -148,9 +153,9 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,下完单复制订单号发给我
-                                        ''' % (q, price, fx2, shorturl2)
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
+                                        ''' % (q, price, fx2, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -233,20 +238,28 @@ class Alimama:
             real_price = round(price - coupon_amount, 2)
             res1 = self.get_tk_link(auctionid)
 
-            tao_token = res1['taoToken']
-            asciistr2 = self.encrypt_oracle(tao_token)
+            # tao_token = res1['taoToken']
+            # asciistr2 = self.encrypt_oracle(tao_token)
+            #
+            # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
+            #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+            # shorturl2 = self.movie.getShortUrl(longurl2)
 
-            longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
-                'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
-            shorturl2 = self.movie.getShortUrl(longurl2)
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
 
             coupon_link = res1['couponLink']
             if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                asciistr = self.encrypt_oracle(coupon_token)
-                longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
-                    'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
-                shorturl = self.movie.getShortUrl(longurl)
+                # coupon_token = res1['couponLinkTaoToken']
+                # asciistr = self.encrypt_oracle(coupon_token)
+                # longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
+                #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+                # shorturl = self.movie.getShortUrl(longurl)
+                coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+                coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+
                 res_text = '''
 一一一一淘宝返利信息一一一一
 
@@ -259,10 +272,10 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,点击头像添加机器人好友
-3,下完单复制订单号发给我
-                                        ''' % (q, price, coupon_amount, real_price, fx2, shorturl)
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人为好友
+3,下完单后复制订单号发给我
+                                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
             else:
                 res_text = '''
 一一一一淘宝返利信息一一一一
@@ -273,10 +286,10 @@ class Alimama:
 【淘链接】%s
 
 获取返红包步骤：
-1,点击链接领取优惠券下单
-2,点击头像添加机器人好友
-3,下完单复制订单号发给我
-                        ''' % (q, price, fx2, shorturl2)
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人为好友
+3,下完单后复制订单号发给我
+                        ''' % (q, price, fx2, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
@@ -966,7 +979,7 @@ class Alimama:
     一一一一订单信息一一一一
 
     返利失败，订单信息有误
-    
+
                     '''
                     return {'info': 'not_order', 'user_text': user_text}
 
