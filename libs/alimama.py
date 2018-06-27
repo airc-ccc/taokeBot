@@ -73,7 +73,7 @@ class Alimama:
 
             if url is None:
                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
-                if '《' in msg['Text']:
+                if '《' in msg['Text'] and '》' not in msg['Text']:
                     taokouling = re.search(r'《.*?《', msg['Text']).group()
                 elif '￥' in msg['Text']:
                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
