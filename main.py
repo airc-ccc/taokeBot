@@ -45,9 +45,9 @@ def taojin_init():
         print('jd..start....')
         mj.login()
 
-    if config.get('SYS', 'tb') == 'yes':
-        print('tb...start....')
-        al.login()
+    # if config.get('SYS', 'tb') == 'yes':
+    #     print('tb...start....')
+    #     al.login()
 
     if config.get('SYS', 'pdd') == 'yes':
         print('pdd...start....')
