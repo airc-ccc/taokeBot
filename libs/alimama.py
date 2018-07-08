@@ -296,7 +296,7 @@ class Alimama:
 # 淘宝优惠券商城：
 # '''+config.get('URL', 'tbshop')+'''
 # 邀请好友得返利说明：
-# '''+config.get('URL', 'lnvit')+'''
+# '''+config.get('URL', 'lnvit')+'''fdasfsf
 #                                 '''
 #                 return text
 #
