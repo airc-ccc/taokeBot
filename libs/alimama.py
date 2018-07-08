@@ -100,6 +100,7 @@ class Alimama:
                 taokouling = re.search(r'€.*?€', msg['Text']).group()
 
             res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
+            # res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
             id = ''
             urlToToken=''
