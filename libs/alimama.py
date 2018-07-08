@@ -102,6 +102,7 @@ class Alimama:
             # res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
             res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
+            print(resj)
             id = ''
             urlToToken=''
             if 'https://item.taobao.com' in resj['url']:
@@ -132,7 +133,7 @@ class Alimama:
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['Content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
+            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
             # 优惠券链接转淘口令
             ress = requests.get(couurl)
             urlToToken = json.loads(ress.text)['model']
@@ -158,7 +159,7 @@ class Alimama:
 获取返红包步骤：
 1,复制本条消息打开淘宝领券
 2,下完单后复制订单号发给我
-                                        ''' % (resj['Content'], resj['price'], coupon_price, fx, tao_token)
+                                        ''' % (resj['content'], resj['price'], coupon_price, fx, tao_token)
             return res_text
 #             if res == 'no match item':
 #                 text = '''
@@ -374,8 +375,7 @@ class Alimama:
             elif '€' in msg['Text']:
                 taokouling = re.search(r'€.*?€', msg['Text']).group()
 
-            # res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
-            res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
             resj = json.loads(res.text)
             id = ''
             urlToToken=''
@@ -407,7 +407,7 @@ class Alimama:
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['Content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
+            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
             # 优惠券链接转淘口令
             ress = requests.get(couurl)
             urlToToken = json.loads(ress.text)['model']
@@ -434,7 +434,7 @@ class Alimama:
 1,复制本条消息打开淘宝领券
 2,点击头像添加机器人为好友
 3,下完单后复制订单号发给我
-                                        ''' % (resj['Content'], resj['price'], coupon_price, fx, tao_token)
+                                        ''' % (resj['content'], resj['price'], coupon_price, fx, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
