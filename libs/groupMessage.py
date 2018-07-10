@@ -1,10 +1,8 @@
 # -*-coding: UTF-8-*-
+import os
 import time
-import itchat
 import webbrowser
-import datetime
 from bottle import template
-from libs.mediaJd import MediaJd
 from flask import Flask
 from flask import request
 import configparser
@@ -15,7 +13,7 @@ app = Flask(__name__)
 
 config = configparser.ConfigParser()
 config.read('config.conf', encoding="utf-8-sig")
-
+bot2 = None
 
 class FormData:
     def run(self):
@@ -30,20 +28,21 @@ class FormData:
     # 获取群
     @async
     def groupMessages(self, bot):
-        time.sleep(30)
+        global bot2
+        bot2 = bot
+        time.sleep(10)
         yorn = input("是否重新选群？y/n:")
         if yorn == 'n':
             self.start_send_msg_thread()
             return
-
         print('start select groups.....')
+        # 删除原有群聊数据
         cm = ConnectMysql()
-
-        select_sql = "DELETE FROM taojin_group_message WHERE bot_puid='" + bot.self.puid + "';"
+        select_sql = "DELETE FROM taojin_group_message WHERE bot_puid='" + bot2.self.puid + "';"
         cm.ExecNonQuery(select_sql)
 
-        group = bot.groups()
-
+        group = bot2.groups()
+        print(group)
         template_demo = """
 <!DOCTPE html>
 <html>
@@ -54,75 +53,47 @@ class FormData:
     <body>
         <div>
             <form action='/formdata'  method='post'>
+                <h2>选择群聊</h2>
                 <input type="hidden" name="username" value="{{ res }}" />
                 <input type="hidden" name="bot_puid" value="{{ bot_puid }}" />
+                <ul>
                 % for item in items:
-                <input type="checkbox" name="{{ item.user_name'] }}" value="{{ item.nick_name'] }}" />{{ item.nick_name'] }}
+                    <li><input type="checkbox" name="{{ item.user_name }}" value="{{ item.nick_name }}" />{{ item.nick_name }}</li>
                 %end
+                </ul>
+                <h2>输入需要群发内容:</h2>
+                <textarea name="sendText" row=2>
+                </textarea>
                 <input type='submit' value='提交' />
             </form>
         </div>
     </body>
 </html>
 """
-
-        html = template(template_demo, items=group, res=bot.self.nick_name, bot_puid=bot.self.puid)
-
+        html = template(template_demo, items=group, res=bot2.self.nick_name, bot_puid=bot2.self.puid)
         with open('form.html', 'w', encoding='utf-8') as f:
             f.write(html)
-
         self.run()
 
     # 群发消息
-    def send_group_meg(self, bot):
-        cm = ConnectMysql()
-
-        select_sql = "SELECT * FROM taojin_group_message WHERE bot_puid='" + bot.self.puid + "';"
-
-        group_info = cm.ExecQuery(select_sql)
-
+    def send_group_meg(self):
+        global bot2
         while True:
-
-            a = datetime.datetime.now().hour
-
-            if int(a) < 8 | int(a) >= 20:
-                print('时间不够')
-                continue
-
-            print('ok')
-            time.sleep(300)
-
-            data_sql = "SELECT * FROM taojin_good_info WHERE status=1 AND bot_puid='" + bot.self.puid + "' LIMIT 1"
-
-            data1 = cm.ExecQuery(data_sql)
-            if data1 == ():
-                MediaJd(bot).get_good_info(bot)
-                cm.Close()
-            cm2 = ConnectMysql()
-            data = cm2.ExecQuery(data_sql)
-            text = '''
-一一一一优惠信息一一一一
-
-【商品名】%s
-【京东价】%s元
-【优惠券】%s元
-【券后价】%s元
-领券链接:%s
-
-请点击链接领取优惠券，下单购买！
-	                ''' % (data[0][3], data[0][5], data[0][7], data[0][8], data[0][10])
-
-            delete_sql = "UPDATE taojin_good_info SET status='2' WHERE id='" + str(
-                data[0][0]) + "'  AND bot_puid='" + bot.self.puid + "'"
-            cm.ExecNonQuery(delete_sql)
-
-            img_name = data[0][3].split('/')
-
-            img_path = "images/" + img_name[-1]
-            for item in group_info:
-                time.sleep(2)
-                itchat.send_image(img_path, item[2])
-                itchat.send(text, item[2])
+            time.sleep(30)
+            text = config.get('GM', 'text')
+            # 获取图片
+            fileArr = [c for a, b, c in os.walk('./groupFile')]
+            cm = ConnectMysql()
+            selectSql = "SELECT * FROM taojin_group_message WHERE bot_puid='" + bot2.self.puid + "'"
+            groupInfo = cm.ExecQuery(selectSql)
+            for item in groupInfo:
+                group = bot2.groups().search(item[3])[0]
+                # 获取需要发送的图片
+                if fileArr[0] != None:
+                    for i in fileArr[0]:
+                        image = 'groupFile/' + i
+                        group.send_image(image)
+                group.send(text)
 
     # 启动一个线程，定时发送商品信息
     def start_send_msg_thread(self):
@@ -130,9 +101,8 @@ class FormData:
         t.setDaemon(True)
         t.start()
 
-
+print(bot2)
 fmm = FormData()
-
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -153,13 +123,18 @@ def setData():
     formdata = request.form
     username = formdata['username']
     bot_puid = formdata['bot_puid']
+    # 把需要群发的信息写入config.conf
+    config.set('GM', 'text', formdata['sendText'])
+    with open('config.conf', 'w') as fw:  # 循环写入
+        config.write(fw)
+    # 把群聊信息写入数据库
     for item in formdata:
-        if item != 'username':
+        if item != 'username' and item != 'sendText' and item != 'bot_puid':
             insert_sql = "INSERT INTO taojin_group_message(username, groupid, groupname, create_time, bot_puid) VALUES('" + username + "', '" + item + "', '" + \
                          formdata[item] + "', '" + str(time.time()) + "', '" + bot_puid + "')"
             cm.ExecNonQuery(insert_sql)
     # 执行群发任务
-    fmm.start_send_msg_thread()
+    fmm .start_send_msg_thread()
     return "添加成功！"
 
 

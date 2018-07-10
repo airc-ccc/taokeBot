@@ -10,7 +10,6 @@ from libs import textMessage
 from libs import my_utils
 from libs import mediaJd
 from libs import alimama
-from libs import groupMessage
 from libs import pingdd
 
 class tbAndJd(object):
@@ -20,7 +19,6 @@ class tbAndJd(object):
         self.al = alimama.Alimama(self.logger, bot)
         self.movie = movie.SharMovie()
         self.tm = textMessage.TextMessage(bot)
-        self.fm = groupMessage.FormData()
         self.ort = orther.Orther()
         self.config = configparser.ConfigParser()
         self.config.read('config.conf',encoding="utf-8-sig")

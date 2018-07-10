@@ -16,7 +16,6 @@ from libs import alimama
 from libs import groupMessage
 from libs import wx_bot
 from libs import orther
-from libs import order
 
 
 config = configparser.ConfigParser()
@@ -28,18 +27,18 @@ else:
     bot = Bot(cache_path='peng.pkl')
 bot.enable_puid('wxpy_puid.pkl')
 mu = my_utils.init_logger()
-fm = groupMessage.FormData()
 mj = mediaJd.MediaJd(bot)
 al = alimama.Alimama(mu, bot)
 wb = wx_bot.tbAndJd(bot)
 ort = orther.Orther()
-ord = order.Order(bot)
 pdd = pingdd.Pdd(bot)
 
 def taojin_init():
     # 根据参数，开启对应的服务
     if config.get('SYS', 'gm') == 'yes':
-       fm.groupMessages(bot)
+        print('group start .......')
+        fm = groupMessage.FormData()
+        fm.groupMessages(bot)
 
     if config.get('SYS', 'jd') == 'yes':
         print('jd..start....')
