@@ -78,7 +78,6 @@ class FormData:
     def send_group_meg(self):
         global bot2
         while True:
-            time.sleep(int(config.get('TIME', 'group_sleep_time')))
             text = open('send.txt', 'r').read()
             # 获取图片
             fileArr = [c for a, b, c in os.walk('./groupFile')]
@@ -94,6 +93,8 @@ class FormData:
                         image = 'groupFile/' + i
                         group.send_image(image)
                 group.send(text)
+
+            time.sleep(int(config.get('TIME', 'group_sleep_time')))
 
     # 启动一个线程，定时发送商品信息
     def start_send_msg_thread(self):
