@@ -62,8 +62,7 @@ class FormData:
                 %end
                 </ul>
                 <h2>输入需要群发内容:</h2>
-                <textarea name="sendText" row=2>
-                </textarea>
+                <textarea name="sendText" rows="3" cols="20"></textarea>
                 <input type='submit' value='提交' />
             </form>
         </div>
@@ -79,14 +78,15 @@ class FormData:
     def send_group_meg(self):
         global bot2
         while True:
-            time.sleep(30)
-            text = config.get('GM', 'text')
+            time.sleep(int(config.get('TIME', 'group_sleep_time')))
+            text = open('send.txt', 'r').read()
             # 获取图片
             fileArr = [c for a, b, c in os.walk('./groupFile')]
             cm = ConnectMysql()
             selectSql = "SELECT * FROM taojin_group_message WHERE bot_puid='" + bot2.self.puid + "'"
             groupInfo = cm.ExecQuery(selectSql)
             for item in groupInfo:
+                time.sleep(int(config.get('TIME', 'group_send_time')))
                 group = bot2.groups().search(item[3])[0]
                 # 获取需要发送的图片
                 if fileArr[0] != None:
@@ -101,7 +101,6 @@ class FormData:
         t.setDaemon(True)
         t.start()
 
-print(bot2)
 fmm = FormData()
 
 @app.route('/', methods=['GET', 'POST'])
@@ -123,10 +122,9 @@ def setData():
     formdata = request.form
     username = formdata['username']
     bot_puid = formdata['bot_puid']
-    # 把需要群发的信息写入config.conf
-    config.set('GM', 'text', formdata['sendText'])
-    with open('config.conf', 'w') as fw:  # 循环写入
-        config.write(fw)
+    # 把需要群发的信息写入send.txt
+    with open('send.txt', 'w') as fw:  # 写入
+        fw.write(formdata['sendText'])
     # 把群聊信息写入数据库
     for item in formdata:
         if item != 'username' and item != 'sendText' and item != 'bot_puid':
