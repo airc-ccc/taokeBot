@@ -1,6 +1,7 @@
 # -*-coding: UTF-8-*-
 
 import time
+import traceback
 import re
 import configparser
 from urllib.parse import quote
@@ -11,6 +12,7 @@ from libs import alimama
 from libs import my_utils
 from libs import tuling
 from libs import movie
+from libs import pingdd
 
 
 config = configparser.ConfigParser()
@@ -23,6 +25,7 @@ class TextMessage:
         self.logger = my_utils.init_logger()
         self.al = alimama.Alimama(self.logger, bot)
         self.ort = Orther()
+        self.pdd = pingdd.Pdd(bot)
         self.movie = movie.SharMovie()
 
     def is_valid_date(self, str):
@@ -56,17 +59,16 @@ class TextMessage:
                 if res['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
-
-                tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
-
+                jdurl = quote(config.get('URL', 'jdshopingurl') + msg['Text'][1:], safe='/:?=&')
+                tburl = quote(config.get('URL', 'tbshopingurl') + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''
 一一一一系统消息一一一一
-亲，以为您找到所有【%s】优惠券,
-快快点击领取吧！
-京东：%s淘宝：%s
+亲,以下是【%s】优惠券集合
+
+京东:%s
+淘宝:%s
                 ''' % (msg['Text'][1:], res1, res2)
                 return text
             elif appect_friend.search(msg['Text']) != None:
@@ -79,16 +81,18 @@ class TextMessage:
                 user_wxid = self.ort.getPuid(bot, msg['FromUserName'])
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-一一一一 系统消息 一一一一
+Hi~我是24h在线的淘小券机器人
 
-回复【个人信息】查看账户详情
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
+    分享【京东商品】
+    分享【淘口令】
+    分享【拼多多商品】
+    回复【互助】查看机器人指令
 
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
+    精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
@@ -108,18 +112,18 @@ class TextMessage:
                 user_wxid = user.puid
                 self.ort.create_user_info(raw, bot, msg, lnivt_code=0, tool=True, wxid=user_wxid)
                 text = '''
-一一一一 系统消息 一一一一
+Hi~我是24h在线的淘小券机器人
 
-账户创建成功！0.3元奖励金已发放！
-
-回复【个人信息】查看账户详情
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
+    分享【京东商品】
+    分享【淘口令】
+    分享【拼多多商品】
+    回复【互助】查看机器人指令
+    
+    精准查询全网内部优惠券哦，您也可以访问下边优惠券商城自主查询呢！
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                         '''
@@ -132,7 +136,8 @@ class TextMessage:
 
                 # 帮助操作
                 text = '''
-一一一一 系统信息 一一一一
+
+Hi~我是24h在线的淘小券机器人，用淘小券，免费领取任意淘宝,天猫,京东,拼多多商品优惠券，好用的话记得分享给好友哦
 
 回复【帮助】可查询指信息
 回复【提现】申请账户余额提现
@@ -143,22 +148,25 @@ class TextMessage:
 回复【找+商品名称】
 回复【搜+商品名称】查看商品优惠券合集
 
-分享【京东商品链接】或者【淘口令】
+分享【京东商品】
+分享【淘宝淘口令】
+分享【拼多多商品】
 精准查询商品优惠券和返利信息！
 分享【VIP视频链接】免费查看高清VIP视频！
 
 优惠券使用教程：
-'''+config.get('URL', 'course')+'''
+http://t.cn/RnAKqWW
 跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
+http://t.cn/RnAK1w0
 免费看电影方法：
-'''+config.get('URL', 'movie')+'''
+http://t.cn/RnAKMul
 京东优惠券商城：
-'''+config.get('URL', 'jdshop')+'''
+http://jdyhq.ptjob.net
 淘宝优惠券商城：
-'''+config.get('URL', 'tbshop')+'''
+http://taoquan.ptjob.net
 邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
+http://t.cn/RnAKafe
+            
                         '''
                 return text
             elif pattern_tixian.search(msg['Text']) != None:
@@ -169,54 +177,40 @@ class TextMessage:
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
-                try:
-                    select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
-                    select_user_res = cm.ExecQuery(select_user_sql)
-                    if float(select_user_res[0][9]) > 0:
-                        # try:
-                        # 修改余额
-                        update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0',update_time='" + str(time.time()) + "' WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
+                select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid+"';"
+                select_user_res = cm.ExecQuery(select_user_sql)
+                timestr = round(time.time())
+                timestr2 = repr(timestr)
+                if float(select_user_res[0][9]) > 0:
+                    # 修改余额
+                    update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0', update_time='"+ timestr2 +"' WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+ bot.self.puid +"';"
+                    total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
+                    update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + repr(total_amount) + "',update_time='" + timestr2 + "' WHERE puid='"+raw.sender.puid +"' AND bot_puid='"+ bot.self.puid +"';"
+                    # 插入提现日志
+                    insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + repr(select_user_res[0][9]) + "', '" + timestr2 + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
+                    to_admin_text = '''
+一一一一 提现通知 一一一一
 
-                        total_amount = float(select_user_res[0][6]) + float(select_user_res[0][9])
-                        update_total_sql = "UPDATE taojin_user_info SET total_rebate_amount='" + str(total_amount) + "',update_time='" + str(time.time()) + "' WHERE puid='" +raw.sender.puid + "' AND bot_puid='"+ bot.self.puid +"';"
+机器人：%s
+提现人：%s
+提现金额：%s元
+提现时间：%s
+                                        ''' % (
+                    bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-                        # 插入提现日志
-                        insert_current_log_sql = "INSERT INTO taojin_current_log(wx_bot, username, amount, create_time, puid, bot_puid) VALUES('" + bot.self.nick_name +"', '" + wei_info['NickName'] + "', '" + str(select_user_res[0][9]) + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+bot.self.puid+"')"
+                    cm.ExecNonQuery(update_sql)
+                    cm.ExecNonQuery(update_total_sql)
+                    cm.ExecNonQuery(insert_current_log_sql)
 
-                        to_admin_text = '''
-    一一一一 提现通知 一一一一
+                    to_user_text = '''
+一一一一 提现信息 一一一一
 
-    机器人：%s
-    提现人：%s
-    提现金额：%s 元
-    提现时间：%s
-                                                ''' % (
-                        bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
-                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-
-                        cm.ExecNonQuery(update_sql)
-                        cm.ExecNonQuery(update_total_sql)
-                        cm.ExecNonQuery(insert_current_log_sql)
-
-                        to_user_text = '''
-    一一一一 提现信息 一一一一
-
-    提现成功！
-    提现金额将以微信红包的形式发放，请耐心等待！
-
-    分享【京东商品链接】或者【淘口令】
-    精准查询商品优惠券和返利信息！
-                                        '''
-                        adminuser.send(to_admin_text)
-                        return to_user_text
-                except Exception as e:
-                    text1 = '''
-一一一一 系统信息 一一一一
-
-提现失败，请稍后重试！
-                            '''
-                    self.logger.debug(e)
-                    return text1
+恭喜你成功提现【%s】元
+提现金额将以微信红包发放，请耐心等待
+                                    ''' % (select_user_res[0][9])
+                    adminuser.send(to_admin_text)
+                    return to_user_text
                 else:
                     text2 = '''
 一一一一 提现信息 一一一一
@@ -243,22 +237,23 @@ class TextMessage:
                     current_info = 0
                 else:
                     current_info = current_info[0][0]
-                print(user_info, current_info)
                 text = '''
 一一一一 个人信息 一一一一
 
-总返利金额: %s元
-京东返利金额: %s元
-淘宝返利金额: %s元
-可提现余额: %s元
-累计提现金额: %s元
+总返利金额:%s元
+京东返利金额:%s元
+淘宝返利金额:%s元
+拼多多返利金额:%s元
+可提现余额:%s元
+累计提现金额:%s元
 
-累计订单量: %s
-京东订单量: %s
-淘宝订单量: %s
-总好友返利: %s
-总好友个数: %s
-                                    ''' % (user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][9], current_info, user_info[0][11],user_info[0][12], user_info[0][13], user_info[0][19], user_info[0][20])
+累计订单量:%s
+京东订单量:%s
+淘宝订单量:%s
+拼多多订单量:%s
+总好友返利:%s
+总好友个数:%s
+                                    ''' % (user_info[0][6], user_info[0][7], user_info[0][8], user_info[0][25], user_info[0][9], current_info, user_info[0][11],user_info[0][12], user_info[0][13], user_info[0][26], user_info[0][19], user_info[0][20])
                 cm.Close()
                 return text
             elif pattern_tuig.search(msg['Text']) != None:
@@ -277,9 +272,9 @@ class TextMessage:
 
 将机器人名片分享到群或者好友
 好友添加机器人为好友
-您和好友都将获取0.3元现金奖励
-您将永久享受好友返利提成
-邀请好友得返利：
+您和好友都将获取'''+ config.get('BN', 'bn2') +'''元现金奖励
+且您将永久享受好友返利10%提成
+邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                                 '''
                 return text
@@ -291,185 +286,38 @@ class TextMessage:
                 text = '''
 一一一一系统消息一一一一
 
-您好！
 点击链接：'''+config.get('URL', 'proxy')+'''
-添加好友备注：跑堂优惠券代理
+添加好友备注：优惠券代理
 
 客服人员将尽快和您取得联系，请耐心等待!
                         '''
                 return text
-            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (len(msg['Text'].split(',')[1]) == 11):
+            elif (msg['Text'].isdigit()) and (len(msg['Text']) == 11):
 
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
+                res = self.mjd.get_jd_order(bot, msg, msg['Text'], wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-                    return user_text
-            elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
-                    len(msg['Text'].split('，')[1]) == 11):
+                return res
+            elif (msg['Text'].isdigit()) and (len(msg['Text']) == 18):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.mjd.get_jd_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
+                res = self.al.get_order(bot, msg, msg['Text'], wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-                    return user_text
-            elif (',' in msg['Text']) and (msg['Text'].split(',')[1].isdigit()) and (
-                    len(msg['Text'].split(',')[1]) == 18):
+                return res
+            elif ('-' in msg['Text']) and (len(msg['Text'].split('-')[1]) == 15) and (len(msg['Text']) == 22):
                 res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.al.get_order(bot, msg, msg['Text'].split(',')[0], msg['Text'].split(',')[1], wei_info, raw.sender.puid, raw)
+                res = self.pdd.order_pdd(bot, msg, 123456, wei_info, raw.sender.puid, raw)
 
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-
-                    return user_text
-            elif ('，' in msg['Text']) and (msg['Text'].split('，')[1].isdigit()) and (
-                    len(msg['Text'].split('，')[1]) == 18):
-                res2 = self.ort.ishaveuserinfo(bot, msg, raw)
-
-                if res2['res'] == 'not_info':
-                    self.ort.create_user_info(raw, bot, msg, 0, tool=False)
-
-                res = self.al.get_order(bot, msg, msg['Text'].split('，')[0], msg['Text'].split('，')[1], wei_info, raw.sender.puid, raw)
-
-                if res['info'] == 'success':
-                    parent = bot.friends().search(res['parent'])
-                    parent.send(res['parent_user_text'])
-                    return res['user_text']
-                elif res['info'] == 'order_exit':
-                    return res['send_text']
-                elif res['info'] == 'not_order':
-                    return res['user_text']
-                elif res['info'] == 'not_parent_and_success':
-                    return res['user_text']
-                elif res['info'] == 'feild':
-                    user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-                                        '''
-
-                    return user_text
-            elif (',' in msg['Text']) and (self.is_valid_date(msg['Text'].split(',')[0])):
-                user_text = '''
-一一一一系统消息一一一一
-
-查询失败！信息格式有误！
-正确格式如下：
-订单完成时间+逗号+订单号
-(京东订单号长度11位，淘宝订单号长度18位)
-例如：
-2018-03-03,123456765432
-
-请确认修改后重新发送
-                                        '''
-                return user_text
-            elif ('，' in msg['Text']) and (self.is_valid_date(msg['Text'].split('，')[0])):
-                user_text = '''
-一一一一系统消息一一一一
-
-查询失败！信息格式有误！
-正确格式如下：
-订单完成时间+逗号+订单号
-(京东订单号长度11位，淘宝订单号长度18位)
-例如：
-2018-03-03,123456765432
-
-请确认修改后重新发送
-                                        '''
-                return user_text
+                return res
             else:
                 if config.get('SYS', 'tl') == 'yes':
                     msg_text = self.tu.tuling(msg)
@@ -503,15 +351,16 @@ class TextMessage:
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://tbyhq.ptjob.net/index.php?r=l&kw=' + msg['Text'][1:], safe='/:?=&')
+                tburl = quote('http://taoquan.ptjob.net/index.php?kw=' + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''
 一一一一系统消息一一一一
-亲，以为您找到所有【%s】优惠券,
-快快点击领取吧！
-京东：%s
-淘宝：%s
+
+亲,以下是【%s】优惠券集合
+
+京东:%s
+淘宝:%s
                                 ''' % (msg['Text'][1:], res1, res2)
                 return text
             elif pattern_bz.search(msg['Text']) != None:
@@ -552,8 +401,8 @@ class TextMessage:
 
 将机器人名片分享到群或者好友
 好友添加机器人为好友
-您和好友都将获取0.3元现金奖励
-您将永久享受好友返利提成
+您和好友都将获取'''+ config.get('BN', 'bn2') +'''元现金奖励
+且您将永久享受好友返利10%提成
 邀请好友得返利说明：
 '''+config.get('URL', 'lnvit')+'''
                                 '''
@@ -562,7 +411,6 @@ class TextMessage:
                 text = '''
 一一一一系统消息一一一一
 
-您好！
 点击链接：'''+config.get('URL', 'proxy')+'''
 添加好友备注：跑堂优惠券代理
 

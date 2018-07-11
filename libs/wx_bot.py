@@ -10,7 +10,7 @@ from libs import textMessage
 from libs import my_utils
 from libs import mediaJd
 from libs import alimama
-from libs import groupMessage
+from libs import pingdd
 
 class tbAndJd(object):
     def __init__(self, bot):
@@ -19,16 +19,16 @@ class tbAndJd(object):
         self.al = alimama.Alimama(self.logger, bot)
         self.movie = movie.SharMovie()
         self.tm = textMessage.TextMessage(bot)
-        self.fm = groupMessage.FormData()
         self.ort = orther.Orther()
         self.config = configparser.ConfigParser()
         self.config.read('config.conf',encoding="utf-8-sig")
+        self.pdd = pingdd.Pdd(bot)
 
     # 检查是否是淘宝链接
     def check_if_is_tb_link(self, msg, bot, raw):
         # 判断信息是否是淘口令
-        if re.search(r'【.*】', msg['Text']) and (
-                u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉天猫APP👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text']):
+        #if re.search(r'【.*】', msg['Text']) and (u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text'] or u'打开👉淘宝👈' in msg['Text'] or u'咑|開👉氵匋 宝👈' in msg['Text']):
+        if re.search(r'【.*】', msg['Text']) and (u'👈' in msg['Text'] or u'👉' in msg['Text']):
             # 判断用户是否存在
             res = self.ort.ishaveuserinfo(bot, msg, raw)
             if res['res'] == 'not_info':
@@ -47,6 +47,8 @@ class tbAndJd(object):
                 xml_info = soup_xml.select('appname')
                 if xml_info[0].string == "京东":
                     return self.mjd.getJd(raw, bot, msg, msg['Url'])
+                elif xml_info[0].string == "拼多多":
+                    return self.pdd.getGood(raw, msg)
                 else:
                     return self.movie.getMovie(msg)
         elif msg['Type'] == 'Text':  # 关键字查询信息
@@ -54,8 +56,8 @@ class tbAndJd(object):
 
     # 检查是否是淘宝链接
     def check_if_is_group(self, msg, bot, raw):
-        if re.search(r'【.*】', msg['Text']) and (
-                u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉天猫APP👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text']):
+        #if re.search(r'【.*】', msg['Text']) and (u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text'] or u'打开👉淘宝👈' in msg['Text'] or u'咑|開👉氵匋 宝👈' in msg['Text']) and ():
+        if re.search(r'【.*】', msg['Text']) and (u'👈' in msg['Text'] or u'👉' in msg['Text']):
             return self.al.getGroupTao(raw, bot, msg)
         elif msg['Type'] == 'Sharing':
             htm = re.findall(r"<appname>.*?</appname>", msg['Content'])
@@ -64,6 +66,8 @@ class tbAndJd(object):
                 xml_info = soup_xml.select('appname')
                 if xml_info[0].string == "京东":
                     return self.mjd.getGroupJd(bot, msg, msg['Url'], raw)
+                elif xml_info[0].string == "拼多多":
+                    return self.pdd.getGroupGood(raw, msg)
                 else:
                     return self.movie.getGroupMovie(msg)
         elif msg['Type'] == 'Text':

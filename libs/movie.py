@@ -16,7 +16,7 @@ class SharMovie(object):
         soup_xml = BeautifulSoup(msg['Content'], 'lxml')
         xml_info = soup_xml.select('appname')
         # 定义视频网站
-        shipin = ['腾讯视频', '爱奇艺', '优酷视频', '芒果 TV']
+        shipin = ['腾讯视频', '爱奇艺', '优酷视频', '芒果 TV', '搜狐视频客户端版']
 
         for item in shipin:
             if item == xml_info[0].string:
@@ -27,16 +27,6 @@ class SharMovie(object):
 一一一一 视频信息 一一一一
 
 播放链接：'''+res+'''
-
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
                         '''
                 return text
 
@@ -54,16 +44,6 @@ class SharMovie(object):
 一一一一 视频信息 一一一一
 
 播放链接：'''+res+'''
-
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息！
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
                         '''
                 return text
 
@@ -75,5 +55,4 @@ class SharMovie(object):
         res = requests.get(url)
 
         rj = json.loads(res.text)
-        print(rj)
         return rj['short_url']

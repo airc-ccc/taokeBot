@@ -1,6 +1,5 @@
 /.idea
-cookies_jd.txt
-cookies_taobao.txt
+*.txt
 *.pkl
 *.log
 /libs/__pycache__
@@ -9,3 +8,5 @@ run_parse_url_server.log
 /images/
 /geckodriver/
 *.conf
+*.png
+/xlsx/

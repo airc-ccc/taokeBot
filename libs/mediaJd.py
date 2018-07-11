@@ -50,7 +50,8 @@ class MediaJd:
         if config.get('SYS', 'jd') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持京东链接
+
+亲，暂不支持京东链接哦
                     '''
             return text
 
@@ -59,12 +60,19 @@ class MediaJd:
             # 用户第一次查询，修改备注
             query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+bot.self.puid+"'")
             if query_good == ():
+                se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
+                if se.search(raw.sender.remark_name) == None:
+                    remarkName = self.ort.generateRemarkName(bot)
+                    split_arr2 = remarkName.split('_')
+                    new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                else:
+                    split_arr = raw.sender.remark_name.split('_')
+                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-                split_arr = raw.sender.remark_name.split('_')
-                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
-
-                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
             print('开始查询分享商品的信息......'+msg['Text'])
 
@@ -74,75 +82,65 @@ class MediaJd:
 
             if sku_arr == None:
                 if config.get('SYS', 'tl') == 'yes':
-                    msg_text = tu.tuling(msg)
+                    msg_text = self.tu.tuling(msg)
                     return msg_text
                 else:
                     return
 
             sku = sku_arr[1].split('.')
             res = self.get_good_link(sku[0])
+
             if res['data']['shotCouponUrl'] == '':
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【返红包】%s元
-     返利链接:%s
+【京东价】%s元
+【返红包】%s元
+ 返利链接:%s
 
-    省钱步骤：
-    1,点击链接，进入下单！
-    2,订单完成后，将订单完成日期和订单号发给我哦！
-    例如：
-    2018-01-01,12345678901
+获取返红包步骤：
+1,点击商品链接并进行下单
+2,下完单后复制订单号发给我
                     ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
             else:
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【优惠券】%s元
-    【券后价】%s元
-    【返红包】%s元
-     领券链接:%s
+【京东价】%s元
+【优惠券】%s元
+【券后价】%s元
+【返红包】%s元
+ 领券链接:%s
 
-    省钱步骤：
-    1,点击链接领取优惠券，正常下单购买！
-    2,订单完成后，将订单完成日期和订单号发给我哦！
-    例如：
-    2018-01-01,12345678901
+获取返红包步骤：
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
                     ''' % (
                 res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
                 res['data']['shotCouponUrl'])
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
-                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
+                             res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+ raw.sender.puid +"', '"+ bot_puid +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
 
                 return text
         except Exception as e:
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
             text = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -157,7 +155,8 @@ class MediaJd:
         if config.get('SYS', 'jd') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持京东链接
+
+亲，暂不支持京东链接
                     '''
             return text
         cm = ConnectMysql()
@@ -173,53 +172,56 @@ class MediaJd:
             res = self.get_good_link(sku[0])
             if res['data']['shotCouponUrl'] == '':
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-     返利链接:%s
-                    ''' % (res['logTitle'], res['logUnitPrice'], res['data']['shotUrl'])
+【京东价】%s元
+【返红包】%s元
+ 返利链接:%s
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+获取返红包步骤：
+1,点击商品链接并进行下单
+2,点击头像添加机器人好友
+3,下完单后复制订单号发给我
+                            ''' % (res['logTitle'], res['logUnitPrice'], res['rebate'], res['data']['shotUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '0', '" + msg[
-                                 'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                                 'ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
             else:
                 text = '''
-    一一一一返利信息一一一一
+一一一一京东返利信息一一一一
 
-    【商品名】%s
+【商品名】%s
 
-    【京东价】%s元
-    【优惠券】%s元
-    【券后价】%s元
-     领券链接:%s
-                    ''' % (
-                res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'],
-                res['data']['shotCouponUrl'])
+【京东价】%s元
+【优惠券】%s元
+【券后价】%s元
+【返红包】%s元
+ 领券链接:%s
 
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('"+ bot.self.nick_name +"', '" + \
+获取返红包步骤：
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人好友
+3,下完单后复制订单号发给我
+                                    ''' % (
+                    res['logTitle'], res['logUnitPrice'], res['youhuiquan_price'], res['coupon_price'], res['rebate'],
+                    res['data']['shotCouponUrl'])
+
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('"+ bot.self.nick_name +"', '" + \
                              res['logTitle'] + "', '" + str(res['logUnitPrice']) + "', '" + res['coupon_price2'] + "', '" + \
-                             msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"')"
+                             msg['ActualNickName'] + "', '" + str(time.time()) + "', '"+ puid +"', '"+ bot_puid +"', '"+ wei_info['NickName'] +"', '"+ res['skuid'] +"', '1')"
                 cm.ExecNonQuery(insert_sql)
                 return text
         except Exception as e:
             text = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -235,7 +237,6 @@ class MediaJd:
         while True:
             time.sleep(60 * 3)
             try:
-                print("京东 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 # 搜索商品
                 res = self.se.get(url)
                 # 使用BeautifulSoup解析HTML，并提取属性数据
@@ -293,13 +294,16 @@ class MediaJd:
         # 写入Cookies文件
         with open(cookie_fname, 'w') as f:
             f.write(json.dumps(cookies))
+        time.sleep(5)
+        wd.quit()
+
 
         return 'Login Success'
 
     def login(self):
         clr = self.check_login()
         if 'Login Success' in clr:
-            self.logger.debug('京东已登录！不需要再次登录！')
+            print('京东已登录！不需要再次登录！')
             return 'Login Success'
         else:
             self.do_login()
@@ -342,10 +346,9 @@ class MediaJd:
             arr = string.split(',')
 
             dict_str = {}
-
             for item in arr:
                 str = item.split('\':')
-                str_b = str[0].split('\r\n\t\t\t\t\t\t\t')
+                str_b = str[0].split('\r\n')
                 str_1 = str_b[1].strip()
                 str_2 = str_1.split('\'')
                 str_3 = str[1].split('\'')
@@ -391,18 +394,20 @@ class MediaJd:
             good_text['logTitle'] = dict_str['logTitle']
             good_text['logUnitPrice'] = dict_str['logUnitPrice']
             good_text['imgUrl'] = dict_str['imgUrl']
+            good_text['skuid'] = dict_str['materialId']
             rebate = float(dict_str['pcComm']) / 100
             if coupon != None:
                 good_text['coupon_price'] = round(float(good_text['logUnitPrice']) - int(coupon_price), 2)
                 good_text['youhuiquan_price'] = coupon_price
-                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * 0.3, 2)
+                good_text['rebate'] = round(float(good_text['coupon_price']) * rebate * float(config.get('BN', 'bn3j')), 2)
             else:
-                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * 0.3, 2)
+                good_text['rebate'] = round(float(good_text['logUnitPrice']) * rebate * float(config.get('BN', 'bn3j')), 2)
 
             good_text['coupon_price2'] = coupon_price
             return good_text
         except Exception as e:
-            self.logger.debug(e)
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
 
 
     # 随机获取商品信息
@@ -462,12 +467,10 @@ class MediaJd:
         print("insert success!")
 
 
-    def get_jd_order(self, bot, msg, times, orderId, userInfo, puid, raw):
+    def get_jd_order(self, bot, msg, orderId, userInfo, puid, raw):
         # try:
-
-        timestr = re.sub('-', '', times)
         order_id = int(orderId)
-
+        timestr = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         cm = ConnectMysql()
 
         # 查询订单是否已经提现过了
@@ -477,31 +480,40 @@ class MediaJd:
         # 判断该订单是否已经提现
         if len(check_order_res) >= 1:
             cm.Close()
-            send_text = '''
+            sendtext = '''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功返利，请勿重复提交订单信息！
-回复【个人信息】 查看订单及返利信息
-如有疑问！请联系管理员
+订单【%s】提交成功，请勿重复提交
                         ''' % (order_id)
-            return {"info": "order_exit", "send_text": send_text}
+            return sendtext
 
-        self.load_cookies()
+        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+puid+"', '"+ bot.self.puid +"', '1')")
 
-        url = 'https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B'
+        send_text ='''
+一一一一 订单消息 一一一一
+
+订单【%s】提交成功，请耐心等待订单结算
+结算成功后机器人将自动返利到您个人账户
+        ''' % (order_id)
+        return send_text
+
+        '''self.load_cookies()
+
+        url = "https://api.jd.com/routerjson?v=2.0&method=jingdong.UnionService.queryOrderList&app_key=96432331E3ACE521CC0D66246EB4C371&access_token=a67c6103-691c-4691-92a2-4dee41ce0f88&360buy_param_json={"unionId":"2011005331","time":"'+timestr+'","pageIndex":"1","pageSize":"50"}&timestamp='+strftime("%Y-%m-%d %H:%M:%S", gmtime())+'&sign=E9D115D4769BDF68FE1DF07D33F7720B"
 
         res = requests.get(url)
 
         rj = json.loads(res.text)
 
         data = json.loads(rj['jingdong_UnionService_queryOrderList_responce']['result'])
-
+        print(data)
         for item in data['data']:
             if int(order_id) == int(item['orderId']):
                 res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
                 return res
 
         user_text = '''
+        '''
 一一一一订单信息一一一一
 
 订单返利失败！
@@ -512,230 +524,226 @@ class MediaJd:
 【3】，查询格式不正确(正确格式：2018-03-20,73462222028 )
 【4】，订单完成日期错误，请输入正确的订单查询日期
 【6】，订单号错误，请输入正确的订单号
+【7】， 订单未完成
 
 请按照提示进行重新操作！
-                '''
-
-        return {'info': 'not_order', 'user_text': user_text}
+                ''''''
+        return {'info': 'not_order', 'user_text': user_text}'''
         # except Exception as e:
         #     print(e)
         #     return {'info': 'feild'}
 
     def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
-
         cm = ConnectMysql()
-        # try:
-        # 查询用户是否有上线
-        check_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';"
-        check_user_res = cm.ExecQuery(check_user_sql)
-
-        # 判断是否已经有个人账户，没有返回信息
-        if len(check_user_res) < 1:
-            cm.Close()
-            return {"info": "not_info"}
-        else:
-            get_query_sql = "SELECT * FROM taojin_query_record WHERE good_title='" + info['skuList'][0]['skuName'] + "'AND puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"' ORDER BY create_time LIMIT 1;"
-
-            get_query_info = cm.ExecQuery(get_query_sql)
-
-            if get_query_info == ():
-                user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：当前商品不是通过当前机器人购买
-
-请按照提示进行重新操作！
-                '''
-                return {'info': 'not_order', 'user_text': user_text}
-
-            # 定义SQL语句 查询用户是否已经存在邀请人
-            # 判断是否已经有邀请人了
-            if check_user_res and check_user_res[0][17] != 0:
-
-                get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';"
-
-                get_parent_info = cm.ExecQuery(get_parent_sql)
-
-                # 计算返利金额
-                add_balance = round(float(info['skuList'][0]['actualFee']) * 0.3, 2)
-                # 累加宗金额
-                withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
-                # 计算京东返利金额
-                jd = round(float(check_user_res[0][7]) + add_balance, 2)
-                # 计算总返利金额
-                total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
-
-                jishen = round(float(get_query_info[0][3]) - float(info['skuList'][0]['payPrice']))
-
-                if jishen < 0:
-                    jishen = 0
-
-                # 计算总节省金额
-                save_money = round(
-                    check_user_res[0][10] + jishen, 2)
-
-                add_parent_balance = round(float(info['skuList'][0]['actualFee']) * 0.1, 2)
-                withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * 0.1, 2)
-
-                # 订单数加1
-                # 总订单数加一
-                total_order_num = int(check_user_res[0][11]) + 1
-                # 淘宝订单数加一
-                jd_order_num = int(check_user_res[0][12]) + 1
-
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', jd_rebate_amount='" + str(jd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
-
-
-                select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
-                # 订单已完成，修改备注
-                order_num = cm.ExecQuery(select_order_num)
-
-                if order_num == ():
-                    split_arr = raw.sender.remark_name.split('_')
-                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
-                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
-
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
-
-
-                cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '1', '"+puid+"', '"+ bot.self.puid +"')")
-
-                # 累计订单数量
-                order_nums = cm.ExecQuery(select_order_num)
-
-                split_arr2 = raw.sender.remark_name.split('_')
-
-                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
-
-                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
-
-                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
-
-                args = {
-                    'wx_bot': bot.self.nick_name,
-                    'bot_puid': bot.self.puid,
-                    'username': check_user_res[0][4],
-                    'puid': puid,
-                    'rebate_amount': add_balance,
-                    'type': 3,
-                    'create_time': time.time()
-                }
-
-
-                # 写入返利日志
-                cm.InsertRebateLog(args)
-
-                parent_puid = ort.getPuid(bot, get_parent_info[0][4])
-                args2 = {
-                    'wx_bot': bot.self.nick_name,
-                    'bot_puid': bot.self.puid,
-                    'username':get_parent_info[0][4],
-                    'puid': parent_puid,
-                    'rebate_amount': add_parent_balance,
-                    'type': 4,
-                    'create_time': time.time()
-                }
-
-
-                # 写入返利日志
-                cm.InsertRebateLog(args2)
-
-                parent_user_text = '''
-一一一一  推广信息 一一一一
-
-您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-回复【个人信息】查询账户信息及提成
-                        ''' % (check_user_res[0][2], add_parent_balance)
-
-                user_text = '''
-一一一一系统消息一一一一
-
-订单【%s】已完成！
-返利金%s元已发放到您的个人账户！
-
-回复【提现】可申请账户余额提现
-回复【个人信息】可看个当前账户信息
-                        ''' % (order_id, add_balance)
+        try:
+            # 查询用户是否有上线
+            check_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';"
+            check_user_res = cm.ExecQuery(check_user_sql)
+            # 判断是否已经有个人账户，没有返回信息
+            if len(check_user_res) < 1:
                 cm.Close()
-                return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success',
-                        'parent': get_parent_info[0][4]}
+                return {"info": "not_info"}
             else:
-                add_balance = round(float(info['skuList'][0]['actualFee']) * 0.3, 2)
-                print(info, add_balance)
-                withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
-                jd = round(float(check_user_res[0][7]) + add_balance, 2)
-                total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
+                get_query_sql = "SELECT * FROM taojin_query_record WHERE good_title='" + str(info['skuList'][0]['skuName']) + "'AND puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"' ORDER BY create_time LIMIT 1;"
+                get_query_info = cm.ExecQuery(get_query_sql)
 
-                jishen = round(float(get_query_info[0][3]) - float(info['skuList'][0]['payPrice']))
+                if get_query_info == ():
+                    user_text = '''
+    一一一一订单信息一一一一
 
-                if jishen < 0:
-                    jishen = 0
-                save_money = round(check_user_res[0][10] + jishen, 2)
+    返利失败，订单信息有误
 
-                # 订单数加1
-                # 总订单数加一
-                total_order_num = int(check_user_res[0][11]) + 1
-                # 淘宝订单数加一
-                jd_order_num = int(check_user_res[0][12]) + 1
+                    '''
+                    return {'info': 'not_order', 'user_text': user_text}
 
-                up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid=" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
+                # 定义SQL语句 查询用户是否已经存在邀请人
+                # 判断是否已经有邀请人了
+                if check_user_res and check_user_res[0][17] != '0':
 
-                cm.ExecNonQuery(up_sql)
+                    get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';"
+                    get_parent_info = cm.ExecQuery(get_parent_sql)
 
-                select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
-                # 订单已完成，修改备注
-                order_num = cm.ExecQuery(select_order_num)
+                    # 计算返利金额
+                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3j')), 2)
+                    # 累加宗金额
+                    withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
+                    # 计算京东返利金额
+                    jd = round(float(check_user_res[0][7]) + add_balance, 2)
+                    # 计算总返利金额
+                    total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                if order_num == ():
-                    split_arr = raw.sender.remark_name.split('_')
-                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                    jishen = round(float(get_query_info[0][4]) - float(info['skuList'][0]['payPrice']))
+
+                    if jishen < 0:
+                        jishen = 0
+
+                    # 计算总节省金额
+                    save_money = round(
+                        check_user_res[0][10] + jishen, 2)
+
+                    add_parent_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn4')), 2)
+
+                    withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * float(config.get('BN', 'bn4')), 2)
+
+                    # 订单数加1
+                    # 总订单数加一
+                    total_order_num = int(check_user_res[0][11]) + 1
+                    # 淘宝订单数加一
+                    jd_order_num = int(check_user_res[0][12]) + 1
+
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', jd_rebate_amount='" + str(jd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
+
+
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
+
+                    cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ str(bot.self.nick_name) +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '1', '"+puid+"', '"+ bot.self.puid +"')")
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+
+                    split_arr2 = raw.sender.remark_name.split('_')
+
+                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+
                     bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
                     cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 
-                cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')")
-
-                # 累计订单数量
-                order_nums = cm.ExecQuery(select_order_num)
-
-                split_arr2 = raw.sender.remark_name.split('_')
-
-                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
-
-                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
-
-                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
-
-                args = {
-                    'wx_bot': bot.self.nick_name,
-                    'bot_puid': bot.self.puid,
-                    'username': check_user_res[0][4],
-                    'rebate_amount': add_balance,
-                    'type': 3,
-                    'create_time': time.time()
-                }
+                    args = {
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username': check_user_res[0][4],
+                        'puid': puid,
+                        'rebate_amount': add_balance,
+                        'type': 3,
+                        'create_time': time.time()
+                    }
 
 
-                # 写入返利日志
-                cm.InsertRebateLog(args)
+                    # 写入返利日志
+                    cm.InsertRebateLog(args)
 
-                user_text = '''
-一一一一 订单消息 一一一一
+                    parent_puid = ort.getPuid(bot, get_parent_info[0][4])
+                    args2 = {
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username':get_parent_info[0][4],
+                        'puid': parent_puid,
+                        'rebate_amount': add_parent_balance,
+                        'type': 4,
+                        'create_time': time.time()
+                    }
 
-订单【%s】标记成功，返利金%s已发放到您的账户
-回复【个人信息】 查看订单及返利信息
 
-回复【提现】可申请账户余额提现
-回复【个人信息】可看个当前账户信息
+                    # 写入返利日志
+                    cm.InsertRebateLog(args2)
+
+                    parent_user_text = '''
+    一一一一  推广信息 一一一一
+
+    您的好友【%s】又完成了一笔订单
+    返利提成%s元已发放到您个人账户
+    回复【个人信息】可查询账户信息
+                            ''' % (check_user_res[0][2], add_parent_balance)
+
+                    user_text = '''
+    一一一一系统消息一一一一
+
+    订单【%s】已完成
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查询账户信息
+    回复【提现】可申请账户余额提现
                             ''' % (order_id, add_balance)
-                cm.Close()
-                return {'user_text': user_text, 'info': 'not_parent_and_success'}
-        # except Exception as e:
-        #     print(e)
-        #     return {'info': 'feild'}
+                    cm.Close()
+                    return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success',
+                            'parent': get_parent_info[0][4]}
+                else:
+                    add_balance = round(float(info['skuList'][0]['actualFee']) * float(config.get('BN', 'bn3j')), 2)
+                    withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
+                    jd = round(float(check_user_res[0][7]) + add_balance, 2)
+                    total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
+
+                    jishen = round(float(get_query_info[0][4]) - float(info['skuList'][0]['payPrice']))
+
+                    if jishen < 0:
+                        jishen = 0
+                    save_money = round(check_user_res[0][10] + jishen, 2)
+
+                    # 订单数加1
+                    # 总订单数加一
+                    total_order_num = int(check_user_res[0][11]) + 1
+                    # 淘宝订单数加一
+                    jd_order_num = int(check_user_res[0][12]) + 1
+
+                    up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
+
+                    cm.ExecNonQuery(up_sql)
+
+                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    # 订单已完成，修改备注
+                    order_num = cm.ExecQuery(select_order_num)
+
+                    if order_num == ():
+                        split_arr = raw.sender.remark_name.split('_')
+                        new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                        bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+
+                        u2 = "UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'"
+                        cm.ExecNonQuery(u2)
+
+                    i1 = "INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid) VALUES('"+ bot.self.nick_name +"', '" + str(userInfo['NickName']) + "', '" + str(order_id) + "', '" + str(timestr) + "', '2', '"+ puid +"', '"+ bot.self.puid +"')"
+
+                    cm.ExecNonQuery(i1)
+
+                    # 累计订单数量
+                    order_nums = cm.ExecQuery(select_order_num)
+
+                    split_arr2 = raw.sender.remark_name.split('_')
+
+                    new_remark_name = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+
+                    bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
+                    cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+
+                    args = {
+                        'wx_bot': bot.self.nick_name,
+                        'bot_puid': bot.self.puid,
+                        'username': check_user_res[0][4],
+                        'rebate_amount': add_balance,
+                        'puid': puid,
+                        'type': 3,
+                        'create_time': time.time()
+                    }
+
+
+                    # 写入返利日志
+                    cm.InsertRebateLog(args)
+
+                    user_text = '''
+    一一一一 订单消息 一一一一
+
+    订单【%s】返利成功
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查看账户详情
+    回复【提现】可申请账户余额提现
+                                ''' % (order_id, add_balance)
+                    cm.Close()
+                    return {'user_text': user_text, 'info': 'not_parent_and_success'}
+        except Exception as e:
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
+            return {'info': 'feild'}
 
     def getOrderInfo(self, bot):
 

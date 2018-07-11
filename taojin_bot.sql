@@ -1,6 +1,6 @@
 /*
 SQLyog 企业版 - MySQL GUI v8.14 
-MySQL - 5.5.5-10.1.31-MariaDB : Database - wxpy_taojin
+MySQL - 5.5.5-10.1.31-MariaDB : Database - wxpy_taojin2
 *********************************************************************
 */
 
@@ -12,9 +12,9 @@ MySQL - 5.5.5-10.1.31-MariaDB : Database - wxpy_taojin
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-CREATE DATABASE /*!32312 IF NOT EXISTS*/`wxpy_taojin` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`wxpy_taojin2` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
-USE `wxpy_taojin`;
+USE `wxpy_taojin2`;
 
 /*Table structure for table `taojin_current_log` */
 
@@ -29,9 +29,7 @@ CREATE TABLE `taojin_current_log` (
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   `bot_puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_current_log` */
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_good_info` */
 
@@ -55,8 +53,6 @@ CREATE TABLE `taojin_good_info` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
-/*Data for the table `taojin_good_info` */
-
 /*Table structure for table `taojin_group_message` */
 
 DROP TABLE IF EXISTS `taojin_group_message`;
@@ -71,8 +67,6 @@ CREATE TABLE `taojin_group_message` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
-/*Data for the table `taojin_group_message` */
-
 /*Table structure for table `taojin_order` */
 
 DROP TABLE IF EXISTS `taojin_order`;
@@ -82,14 +76,27 @@ CREATE TABLE `taojin_order` (
   `wx_bot` varchar(255) CHARACTER SET utf8 NOT NULL,
   `username` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT 'ç”¨æˆ·å',
   `order_id` char(32) CHARACTER SET utf8 NOT NULL COMMENT 'è®¢å•å·',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 未完成 2 已完成',
   `completion_time` int(11) NOT NULL,
   `order_source` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'è®¢å•æ¥æºï¼š1ï¼Œäº¬ä¸œ 2ï¼Œæ·˜å®',
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   `bot_puid` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
-/*Data for the table `taojin_order` */
+/*Table structure for table `taojin_order_info` */
+
+DROP TABLE IF EXISTS `taojin_order_info`;
+
+CREATE TABLE `taojin_order_info` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `bot_puid` varchar(255) NOT NULL,
+  `skuid` int(32) NOT NULL COMMENT '商品skuid',
+  `order_id` int(32) NOT NULL,
+  `type` tinyint(1) NOT NULL COMMENT '类型，1 京东 2 淘宝',
+  `create_time` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `taojin_proxy_info` */
 
@@ -105,8 +112,6 @@ CREATE TABLE `taojin_proxy_info` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-/*Data for the table `taojin_proxy_info` */
-
 /*Table structure for table `taojin_query_record` */
 
 DROP TABLE IF EXISTS `taojin_query_record`;
@@ -114,6 +119,7 @@ DROP TABLE IF EXISTS `taojin_query_record`;
 CREATE TABLE `taojin_query_record` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `wx_bot` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '微信机器人',
+  `skuid` varchar(100) CHARACTER SET utf8 NOT NULL,
   `good_title` varchar(255) CHARACTER SET utf8 NOT NULL,
   `good_price` decimal(10,2) NOT NULL,
   `good_coupon` int(10) DEFAULT NULL,
@@ -122,12 +128,9 @@ CREATE TABLE `taojin_query_record` (
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '用户puid',
   `bot_puid` varchar(255) CHARACTER SET utf8 NOT NULL COMMENT '机器人puid',
   `chatroom` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '群聊昵称',
+  `type` tinyint(1) NOT NULL COMMENT '1京东 2 淘宝 3 拼多多',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_query_record` */
-
-insert  into `taojin_query_record`(`id`,`wx_bot`,`good_title`,`good_price`,`good_coupon`,`username`,`create_time`,`puid`,`bot_puid`,`chatroom`) values (73,'彭涛','美国苹果 AEMAPE 短袖T恤男装2018夏季新款简约格子图案休闲修身透气衣服潮流圆领男士t恤 256 白色 L','99.00',0,'666的小号',1525674387,'78cc5adf','389a91e9',NULL),(74,'彭涛','美国苹果 AEMAPE 短袖T恤男装2018夏季新款简约格子图案休闲修身透气衣服潮流圆领男士t恤 256 白色 L','99.00',0,'666的小号',1525674416,'78cc5adf','389a91e9',NULL),(75,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525674458,'78cc5adf','389a91e9',NULL),(76,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525679162,'78cc5adf','389a91e9',NULL),(77,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525680312,'78cc5adf','389a91e9',NULL),(78,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525680462,'78cc5adf','389a91e9',NULL),(79,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525681049,'78cc5adf','389a91e9',NULL),(80,'彭涛','稻草人（MEXICAN）短袖T恤男运动套装男装2018夏季新款七分裤子简约舒适休闲修身t恤男 18139DC1826 白色 XL','168.00',0,'666的小号',1525681118,'78cc5adf','389a91e9',NULL);
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_rebate_log` */
 
@@ -143,11 +146,7 @@ CREATE TABLE `taojin_rebate_log` (
   `create_time` int(11) NOT NULL COMMENT 'åˆ›å»ºæ—¶é—´',
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_rebate_log` */
-
-insert  into `taojin_rebate_log`(`id`,`bot_puid`,`wx_bot`,`username`,`rebate_amount`,`type`,`create_time`,`puid`) values (66,'389a91e9','彭涛','666的小号',0.30,1,1525674075,'78cc5adf');
+) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*Table structure for table `taojin_user_info` */
 
@@ -180,11 +179,7 @@ CREATE TABLE `taojin_user_info` (
   `remarkname` varchar(255) NOT NULL COMMENT '用户备注',
   `bot_puid` varchar(255) NOT NULL COMMENT '机器人的puid',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
-
-/*Data for the table `taojin_user_info` */
-
-insert  into `taojin_user_info`(`id`,`wx_bot`,`puid`,`sex`,`nickname`,`lnivt_code`,`total_rebate_amount`,`jd_rebate_amount`,`taobao_rebate_amount`,`withdrawals_amount`,`save_money`,`order_quantity`,`jd_order_quantity`,`taobao_order_quantity`,`jd_completed_order`,`taobao_completed_order`,`jd_unfinished_order`,`lnivter`,`taobao_unfinished_order`,`friends_rebate`,`friends_number`,`create_time`,`update_time`,`remarkname`,`bot_puid`) values (26,'彭涛','78cc5adf',1,'201857106A0','78cc5adf',0.00,0.00,0.00,0.30,0.00,0,0,0,0,0,0,'0',0,0.00,0,1525674075,NULL,'201857106B0','389a91e9');
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

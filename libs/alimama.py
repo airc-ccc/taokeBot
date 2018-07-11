@@ -1,10 +1,12 @@
 # encoding: utf-8
 
+import os
 import re
 import json
 import os.path
 import configparser
 import platform
+import random
 import sys
 import time
 import traceback
@@ -13,15 +15,17 @@ if sys.version_info[0] < 3:
     import urllib
 else:
     import urllib.parse as urllib
+
 from io import BytesIO
 import pyqrcode
 import requests
 from PIL import Image
 from threading import Thread
-from dateutil.relativedelta import relativedelta
 from libs.mysql import ConnectMysql
 from libs.orther import Orther
+from libs.movie import SharMovie
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 
 cookie_fname = 'cookies_taobao.txt'
 config = configparser.ConfigParser()
@@ -31,59 +35,91 @@ class Alimama:
     def __init__(self, logger, bot):
         if config.get('SYS', 'tb') == 'yes':
             self.se = requests.session()
-            self.load_cookies()
+            # self.load_cookies()
             self.myip = "127.0.0.1"
-            self.start_keep_cookie_thread()
+            # self.start_keep_cookie_thread()
             self.logger = logger
             self.ort = Orther()
+            self.movie = SharMovie()
+            self.bot2 = bot
+
+        # 加密方法
+
+    def encrypt_oracle(self, value):
+        a = ''
+        for i in value:
+            a = a + str(ord(i)) + '**'
+
+        return a
 
     def getTao(self, bot, msg, raw):
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持淘宝商品查询
+机器人在升级中, 暂不支持淘宝商品查询
                     '''
             return text
 
         try:
-            q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
-            if u'打开👉天猫APP👈' in msg['Text']:
-                try:
-                    url = re.search(r'http://.* \)', msg['Text']).group().replace(u' )', '')
-                except:
-                    url = None
+            # q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
+            # if u'打开👉天猫APP👈' in msg['Text']:
+            #     try:
+            #         url = re.search(r'http://.* \)', msg['Text']).group().replace(u' )', '')
+            #     except:
+            #         url = None
+            #
+            # else:
+            #     try:
+            #         url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
+            #     except:
+            #         url = None
 
-            else:
-                try:
-                    url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
-                except:
-                    url = None
+            # if url is None:
+            #     taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
+            #     if '《' in msg['Text']:
+            #         taokouling = re.search(r'《.*?《', msg['Text']).group()
+            #     elif '￥' in msg['Text']:
+            #         taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+            #     elif '€' in msg['Text']:
+            #         taokouling = re.search(r'€.*?€', msg['Text']).group()
+            #     parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
+            #     res = requests.post(taokoulingurl, data=parms)
+            #     url = res.json()['url'].replace('https://', 'http://')
 
-            if url is None:
-                taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
+            # real_url = self.get_real_url(url)
+            #
+            # res = self.get_detail(bot, real_url, raw)
+
+            # 获取淘口令
+            taokoulin = ''
+            if '《' in msg['Text']:
+                taokouling = re.search(r'《.*?《', msg['Text']).group()
+            elif '￥' in msg['Text']:
                 taokouling = re.search(r'￥.*?￥', msg['Text']).group()
-                parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
-                res = requests.post(taokoulingurl, data=parms)
-                url = res.json()['url'].replace('https://', 'http://')
+            elif '€' in msg['Text']:
+                taokouling = re.search(r'€.*?€', msg['Text']).group()
 
-            real_url = self.get_real_url(url)
-
-            res = self.get_detail(bot, real_url, raw)
-            if res == 'no match item':
+            # res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
+            res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            resj = json.loads(res.text)
+            print(resj)
+            id = ''
+            urlToToken=''
+            if 'https://item.taobao.com' in resj['url']:
+                potten2 = resj['url'].split('&id=')
+                id = potten2[1].split('&sourceType')[0]
+            else:
+                potten = resj['url'].split('https://a.m.taobao.com/i')
+                id = potten[1].split('.htm')[0]
+            # 获取优惠券链接
+            datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
+            coupon_link = json.loads(datares.text)
+            if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 text = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -93,67 +129,117 @@ class Alimama:
                                 '''
                 return text
 
-            auctionid = res['auctionId']
-            coupon_amount = res['couponAmount']
-            price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * 0.3, 2)
-            real_price = round(price - coupon_amount, 2)
-            res1 = self.get_tk_link(auctionid)
+            coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
+            # 获取优惠券金额
+            coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            tao_token = res1['taoToken']
-            coupon_link = res1['couponLink']
-            if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                res_text = '''
-一一一一返利信息一一一一
+            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
+            # 优惠券链接转淘口令
+            ress = requests.get(couurl)
+            urlToToken = json.loads(ress.text)['model']
+            # 红包：券后价 * 佣金比例 / 100
+            fx = round(round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100, 2)
 
-【商品名】%s元
+            # 更换符号
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = urlToToken.replace(urlToToken[:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
 
-【淘宝价】%s元
-【优惠券】%s元
-【券后价】%s元
-【返红包】%.2f元
-【淘口令】%s
-
-省钱步骤：
-1,复制本条信息打开淘宝App领取优惠券下单！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
-                        ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
-            else:
-                res_text = '''
+            res_text = '''
 一一一一返利信息一一一一
 
 【商品名】%s
-【淘宝价】%s元
-【返红包】%.2f元
-【淘口令】%s
 
-省钱步骤：
-1,复制本条信息打开淘宝App领取优惠券下单！
-2,订单完成后，将订单完成日期和订单号发给我哦！
-例如：
-2018-01-01,12345678901
-                                        ''' % (q, price, fx2, tao_token)
+【淘宝价】%s元
+【优惠券】%s元
+【返红包】%.2f元
+【淘链接】%s
+
+获取返红包步骤：
+1,复制本条消息打开淘宝领券
+2,下完单后复制订单号发给我
+                                        ''' % (resj['content'], resj['price'], coupon_price, fx, tao_token)
             return res_text
+#             if res == 'no match item':
+#                 text = '''
+# 一一一一 返利信息 一一一一
+#
+# 亲，当前商品暂无优惠券,建议您换一个商品试试呢
+#
+# 京东优惠券商城：
+# '''+config.get('URL', 'jdshop')+'''
+# 淘宝优惠券商城：
+# '''+config.get('URL', 'tbshop')+'''
+# 邀请好友得返利说明：
+# '''+config.get('URL', 'lnvit')+'''
+#                                 '''
+#                 return text
+#
+#             auctionid = res['auctionId']
+#             coupon_amount = res['couponAmount']
+#             price = res['zkPrice']
+#
+#             # 佣金
+#             yongjin = price - coupon_amount
+#             if config.get('SYS', 'isHighServant') == 'yes':
+#                 fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+#             else:
+#                 fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+#             real_price = round(price - coupon_amount, 2)
+#             res1 = self.get_tk_link(auctionid)
+#             tu = {0: '🗝', 1: '📲', 2: '🎵'}
+#             n = random.randint(0, 2)
+#             tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+#             tao_token = tao_token.replace(tao_token[-1:], tu[n])
+#             # asciistr2 = self.encrypt_oracle(tao_token)
+#             # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+#             # shorturl2 = self.movie.getShortUrl(longurl2)
+#
+#             coupon_link = res1['couponLink']
+#             if coupon_link != "":
+#                 coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+#                 coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+#                 # asciistr = self.encrypt_oracle(coupon_token)
+#                 # longurl = 'http://txq.ptjob.net/goodCouponToken?value='+asciistr + 'image=' + res['pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+#                 # shorturl = self.movie.getShortUrl(longurl)
+#                 res_text = '''
+# 一一一一返利信息一一一一
+#
+# 【商品名】%s元
+#
+# 【淘宝价】%s元
+# 【优惠券】%s元
+# 【券后价】%s元
+# 【返红包】%.2f元
+# 【淘链接】%s
+#
+# 获取返红包步骤：
+# 1,复制本条消息打开淘宝领券
+# 2,下完单后复制订单号发给我
+#                         ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
+#             else:
+#                 res_text = '''
+# 一一一一返利信息一一一一
+#
+# 【商品名】%s
+# 【淘宝价】%s元
+# 【返红包】%.2f元
+# 【淘链接】%s
+#
+# 获取返红包步骤：
+# 1,复制本条消息打开淘宝领券
+# 2,下完单后复制订单号发给我
+#                                         ''' % (q, price, fx2, tao_token)
+#             return res_text
         except Exception as e:
             trace = traceback.format_exc()
-            self.logger.warning("error:{},trace:{}".format(str(e), trace))
+            print("error:{},trace:{}".format(str(e), trace))
             info = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢,您也可以在下边的优惠券商城中查找哦
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
 京东优惠券商城：
 '''+config.get('URL', 'jdshop')+'''
 淘宝优惠券商城：
@@ -167,101 +253,205 @@ class Alimama:
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
-暂不支持商品查询
+机器人在升级中, 暂不支持淘宝商品查询
                     '''
             return text
         try:
-            q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
-            if u'打开👉天猫APP👈' in msg['Text']:
-                try:
-                    url = re.search(r'http://.* \)', msg['Text']).group().replace(u' )', '')
-                except:
-                    url = None
-
-            else:
-                try:
-                    url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
-                except:
-                    url = None
-
-            if url is None:
-                taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
+#             q = re.search(r'【.*】', msg['Text']).group().replace(u'【', '').replace(u'】', '')
+#             if u'打开👉天猫APP👈' in msg['Text']:
+#                 try:
+#                     url = re.search(r'http://.* \)', msg['Text']).group().replace(u' )', '')
+#                 except:
+#                     url = None
+#
+#             else:
+#                 try:
+#                     url = re.search(r'http://.* ，', msg['Text']).group().replace(u' ，', '')
+#                 except:
+#                     url = None
+#
+#             if url is None:
+#                 taokoulingurl = 'http://www.taokouling.com/index.php?m=api&a=taokoulingjm'
+#                 if '《' in msg['Text']:
+#                     taokouling = re.search(r'《.*?《', msg['Text']).group()
+#                 elif '￥' in msg['Text']:
+#                     taokouling = re.search(r'￥.*?￥', msg['Text']).group()
+#                 elif '€' in msg['Text']:
+#                     taokouling = re.search(r'€.*?€', msg['Text']).group()
+#                 parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
+#                 res = requests.post(taokoulingurl, data=parms)
+#                 url = res.json()['url'].replace('https://', 'http://')
+#
+#             real_url = self.get_real_url(url)
+#
+#             res = self.get_group_detail(bot, real_url, raw)
+#             if res == 'no match item':
+#                 text = '''
+# 一一一一 返利信息 一一一一
+#
+# 亲，当前商品暂无优惠券,建议您换一个商品试试呢
+#
+#
+# 京东优惠券商城：
+# '''+config.get('URL', 'jdshop')+'''
+# 淘宝优惠券商城：
+# '''+config.get('URL', 'tbshop')+'''
+# 邀请好友得返利说明：
+# '''+config.get('URL', 'lnvit')+'''fdasfsf
+#                                 '''
+#                 return text
+#
+#             auctionid = res['auctionId']
+#             coupon_amount = res['couponAmount']
+#             price = res['zkPrice']
+#             # 佣金
+#             yongjin = price - coupon_amount
+#             if config.get('SYS', 'isHighServant') == 'yes':
+#                 fx2 = round((yongjin * float(res['tkRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+#             else:
+#                 fx2 = round((yongjin * float(res['tkCommonRate']) / 100) * float(config.get('BN', 'bn3t')), 2)
+#             real_price = round(price - coupon_amount, 2)
+#             res1 = self.get_tk_link(auctionid)
+#
+#             # tao_token = res1['taoToken']
+#             # asciistr2 = self.encrypt_oracle(tao_token)
+#             #
+#             # longurl2 = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr2 + 'image=' + res[
+#             #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['clickUrl']
+#             # shorturl2 = self.movie.getShortUrl(longurl2)
+#
+#             tu = {0: '🗝', 1: '📲', 2: '🎵'}
+#             n = random.randint(0, 2)
+#             tao_token = res1['taoToken'].replace(res1['taoToken'][:1], tu[n])
+#             tao_token = tao_token.replace(tao_token[-1:], tu[n])
+#
+#             coupon_link = res1['couponLink']
+#             if coupon_link != "":
+#                 # coupon_token = res1['couponLinkTaoToken']
+#                 # asciistr = self.encrypt_oracle(coupon_token)
+#                 # longurl = 'http://txq.ptjob.net/goodCouponToken?value=' + asciistr + 'image=' + res[
+#                 #     'pictUrl'] + 'title=' + res['title'] + 'coupon_url=' + res1['couponLink']
+#                 # shorturl = self.movie.getShortUrl(longurl)
+#                 coupon_token = res1['couponLinkTaoToken'].replace(res1['couponLinkTaoToken'][:1], tu[n])
+#                 coupon_token = coupon_token.replace(coupon_token[-1:], tu[n])
+#
+#                 res_text = '''
+# 一一一一淘宝返利信息一一一一
+#
+# 【商品名】%s元
+#
+# 【淘宝价】%s元
+# 【优惠券】%s元
+# 【券后价】%s元
+# 【返红包】%.2f元
+# 【淘链接】%s
+#
+# 获取返红包步骤：
+# 1,复制本条消息打开淘宝领券
+# 2,点击头像添加机器人为好友
+# 3,下完单后复制订单号发给我
+#                                         ''' % (q, price, coupon_amount, real_price, fx2, coupon_token)
+#             else:
+#                 res_text = '''
+# 一一一一淘宝返利信息一一一一
+#
+# 【商品名】%s
+# 【淘宝价】%s元
+# 【返红包】%.2f元
+# 【淘链接】%s
+#
+# 获取返红包步骤：
+# 1,复制本条消息打开淘宝领券
+# 2,点击头像添加机器人为好友
+# 3,下完单后复制订单号发给我
+#                         ''' % (q, price, fx2, tao_token)
+#             return res_text
+            # 获取淘口令
+            taokoulin = ''
+            if '《' in msg['Text']:
+                taokouling = re.search(r'《.*?《', msg['Text']).group()
+            elif '￥' in msg['Text']:
                 taokouling = re.search(r'￥.*?￥', msg['Text']).group()
-                parms = {'username': 'wx_tb_fanli', 'password': 'wx_tb_fanli', 'text': taokouling}
-                res = requests.post(taokoulingurl, data=parms)
-                url = res.json()['url'].replace('https://', 'http://')
+            elif '€' in msg['Text']:
+                taokouling = re.search(r'€.*?€', msg['Text']).group()
 
-            real_url = self.get_real_url(url)
 
-            res = self.get_group_detail(bot, real_url, raw)
-            if res == 'no match item':
+            res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            resj = json.loads(res.text)
+            id = ''
+            urlToToken=''
+            if 'https://item.taobao.com' in resj['url']:
+                potten2 = resj['url'].split('&id=')
+                id = potten2[1].split('&sourceType')[0]
+            else:
+                potten = resj['url'].split('https://a.m.taobao.com/i')
+                id = potten[1].split('.htm')[0]
+            # 获取优惠券链接
+            datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
+            coupon_link = json.loads(datares.text)
+            if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 text = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
-
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
                                 '''
                 return text
 
-            auctionid = res['auctionId']
-            coupon_amount = res['couponAmount']
-            price = res['zkPrice']
-            fx2 = round(float(res['tkCommonFee']) * 0.3, 2)
-            real_price = round(price - coupon_amount, 2)
-            res1 = self.get_tk_link(auctionid)
+            coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
+            # 获取优惠券金额
+            coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            tao_token = res1['taoToken']
-            coupon_link = res1['couponLink']
-            if coupon_link != "":
-                coupon_token = res1['couponLinkTaoToken']
-                res_text = '''
-一一一一返利信息一一一一
+            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
+            # 优惠券链接转淘口令
+            ress = requests.get(couurl)
+            urlToToken = json.loads(ress.text)['model']
+            # 红包：券后价 * 佣金比例 / 100
+            fx = round(round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100, 2)
 
-【商品名】%s元
+            # 更换符号
+            tu = {0: '🗝', 1: '📲', 2: '🎵'}
+            n = random.randint(0, 2)
+            tao_token = urlToToken.replace(urlToToken[:1], tu[n])
+            tao_token = tao_token.replace(tao_token[-1:], tu[n])
 
-【淘宝价】%s元
-【优惠券】%s元
-【券后价】%s元
-【淘口令】%s
-
- 复制本条消息，打开淘宝App领取优惠券！
-                        ''' % (q, price, coupon_amount, real_price, coupon_token)
-            else:
-                res_text = '''
+            res_text = '''
 一一一一返利信息一一一一
 
 【商品名】%s
+
 【淘宝价】%s元
-【淘口令】%s
- 复制本条消息
-                                        ''' % (q, price, tao_token)
+【优惠券】%s元
+【返红包】%.2f元
+【淘链接】%s
+
+获取返红包步骤：
+1,复制本条消息打开淘宝领券
+2,点击头像添加机器人为好友
+3,下完单后复制订单号发给我
+                                        ''' % (resj['content'], resj['price'], coupon_price, fx, tao_token)
             return res_text
         except Exception as e:
             trace = traceback.format_exc()
-            self.logger.warning("error:{},trace:{}".format(str(e), trace))
+            print("error:{},trace:{}".format(str(e), trace))
             info = '''
 一一一一 返利信息 一一一一
 
-返利失败，该商品暂无优惠券信息！
+亲，当前商品暂无优惠券,建议您换一个商品试试呢。
 
-分享【京东商品链接】或者【淘口令】
-精准查询商品优惠券和返利信息
 
-优惠券使用教程：
-'''+config.get('URL', 'course')+'''
-跑堂优惠券常见问题：
-'''+config.get('URL', 'faq')+'''
-免费看电影方法：
-'''+config.get('URL', 'movie')+'''
+京东优惠券商城：
+'''+config.get('URL', 'jdshop')+'''
+淘宝优惠券商城：
+'''+config.get('URL', 'tbshop')+'''
+邀请好友得返利说明：
+'''+config.get('URL', 'lnvit')+'''
                     '''
             return res_text
 
@@ -293,12 +483,19 @@ class Alimama:
         while True:
             time.sleep(60 * 5)
             try:
-                print("淘宝 visit_main_url......,time:{}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 self.get_url(url, headers)
                 real_url = "https://detail.tmall.com/item.htm?id=42485910384"
                 res = self.get_detail2(real_url)
-                auctionid = res['auctionId']
+                print('淘宝登录验证.....', res)
             except Exception as e:
+                # 给管理员发送登录过期消息
+                adminuser = self.bot2.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
+                text = '''
+                ---------- 系统提醒 ----------
+
+                机器人【%s】, 淘宝登录失效
+                                    ''' % (self.bot2.self.nick_name)
+                adminuser.send(text)
                 trace = traceback.format_exc()
                 self.logger.warning("error:{},trace:{}".format(str(e), trace))
 
@@ -408,6 +605,7 @@ class Alimama:
         }
         res = self.get_url(url, headers=headers)
         rj = json.loads(res.text.replace('(function(){jsonp31(', '').replace(');})();', ''))
+        self.logger.debug(rj)
         return rj
 
     def show_qr_image(self):
@@ -530,6 +728,7 @@ class Alimama:
     def login(self):
         try:
             clr = self.check_login()
+            print('Checking login ...............', clr)
             self.myip = clr['data']['ip']
             if 'mmNick' in clr['data']:
                 self.logger.debug(u"淘宝已经登录 不需要再次登录")
@@ -542,17 +741,21 @@ class Alimama:
                     return 'login success'
         except Exception as e:
             trace = traceback.format_exc()
-            print("{},{}".format(str(e), trace))
             return 'login failed'
 
     def open_do_login(self):
         # loginname = input('请输入淘宝联盟账号:')
         # nloginpwd = input('请输入淘宝联盟密码:')
+        #profileDir = "C:\\Users\pengtao\AppData\Local\Mozilla\Firefox\Profiles\\24xolutj.default"
 
+        #profile = webdriver.FirefoxProfile(profileDir)
+        #print(profile)
+        #wd = webdriver.Firefox(profile)
         wd = webdriver.Firefox()
+
         wd.get('http://pub.alimama.com')
 
-        time.sleep(10)
+        time.sleep(20)
 
         #js = "var pass = document.getElementById(\"TPL_password_1\").setAttribute(\"autocomplete\", \"on\")"
 
@@ -568,31 +771,50 @@ class Alimama:
         # 输入密码
         wd.find_element_by_id('TPL_password_1').send_keys(config.get('TB', 'TB_PASSWORD'))
         # 点击登录按钮
-        time.sleep(20)
+        time.sleep(2)
+        while True:
+            # 定位滑块元素
+            source = wd.find_element_by_xpath("//*[@id='nc_1_n1z']")
+            # 定义鼠标拖放动作
+            ActionChains(wd).drag_and_drop_by_offset(source, 400, 0).perform()
+
+            # 等待JS认证运行,如果不等待容易报错
+            time.sleep(2)
+
+            text = wd.find_element_by_xpath("//div[@id='nc_1__scale_text']/span")
+            # 目前只碰到3种情况：成功（请在在下方输入验证码,请点击图）；无响应（请按住滑块拖动)；失败（哎呀，失败了，请刷新）
+            if text.text.startswith(u'哎呀，出错了，点击'):
+                print('滑动失败！Begin to try.....')
+                # 这里定位失败后的刷新按钮，重新加载滑块模块
+                wd.find_element_by_xpath("//div[@id='havana_nco']/div/span/a").click()
+                time.sleep(3)
+                continue
         wd.find_element_by_id('J_SubmitStatic').click()
 
         # 判断是否需要验证码
-        time.sleep(10)
+        # time.sleep(10)
 
-        if self.isElementExist(wd, 'J_LoginCheck'):
-            print('验证码存在！睡眠120秒')
-            time.sleep(160)
+        # if self.isElementExist(wd, 'J_LoginCheck'):
+        #     print('验证码存在！睡眠120秒')
+        #     time.sleep(160)
 
-        self.logger.debug('login success')
-        with open(cookie_fname, 'w') as f:
-            cookies_arr = []
-            for item in wd.get_cookies():
-                cookies_arr.append([item['name'], item['value']])
-
-            f.write(json.dumps(cookies_arr))
-        return 'login success'
+        # self.logger.debug('login success')
+        # with open(cookie_fname, 'w') as f:
+        #     cookies_arr = []
+        #     for item in wd.get_cookies():
+        #         cookies_arr.append([item['name'], item['value']])
+        #
+        #     f.write(json.dumps(cookies_arr))
+        #
+        # wd.quit()
+        #
+        # return 'login success'
 
     def isElementExist(self, bower, element):
         try:
             bower.find_element_by_id(element)
             return True
         except Exception as e:
-            print(e)
             return False
 
     def get_tb_token(self):
@@ -610,13 +832,20 @@ class Alimama:
         query_good = cm.ExecQuery("SELECT * FROM taojin_query_record WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
 
         if query_good == ():
+            se = re.compile('^(\d+)_(\d+)_\w_(\d)+$')
+            if se.search(raw.sender.remark_name) == None:
+                remarkName = self.ort.generateRemarkName(bot)
+                split_arr2 = remarkName.split('_')
+                new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', 'B', '_', split_arr2[3])
+                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name2)
+                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+            else:
+                split_arr = raw.sender.remark_name.split('_')
+                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
+                bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
 
-            split_arr = raw.sender.remark_name.split('_')
-            new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'B', '_', split_arr[3])
-            bot.core.set_alias(userName=raw.sender.user_name, alias=new_remark_name)
-
-            # 修改数据库
-            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
+                # 修改数据库
+                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + raw.sender.puid + "' AND bot_puid='" + bot.self.puid + "'")
         try:
             t = int(time.time() * 1000)
             tb_token = self.se.cookies.get('_tb_token_', domain="pub.alimama.com")
@@ -638,7 +867,7 @@ class Alimama:
             res = self.get_url(url, headers)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, skuid, type) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.sender.nick_name + "', '" + str(time.time()) + "', '"+raw.sender.puid+"', '"+bot.self.puid+"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"', '2')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -673,7 +902,7 @@ class Alimama:
             res = self.get_url(url, headers)
             rj = res.json()
             if rj['data']['pageList'] != None:
-                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"')"
+                insert_sql = "INSERT INTO taojin_query_record(wx_bot, good_title, good_price, good_coupon, username, create_time, puid, bot_puid, chatroom, skuid, type) VALUES('" + bot.self.nick_name + "', '" + rj['data']['pageList'][0]['title'] + "', '" + str(rj['data']['pageList'][0]['zkPrice']) + "', '"+ str(rj['data']['pageList'][0]['couponAmount']) +"', '" + raw.member.nick_name + "', '" + str(time.time()) + "', '"+ raw.member.puid +"', '"+ bot.self.puid +"', '"+ chatrooms['NickName'] +"', '"+ str(rj['data']['pageList'][0]['auctionId']) +"', '2')"
                 cm.ExecNonQuery(insert_sql)
                 cm.Close()
                 return rj['data']['pageList'][0]
@@ -701,7 +930,6 @@ class Alimama:
     def __get_tk_link_s1(self, auctionid, tb_token, pvid):
         url = 'http://pub.alimama.com/common/adzone/newSelfAdzone2.json?tag=29&itemId=%s&blockId=&t=%s&_tb_token_=%s&pvid=%s' % (
             auctionid, int(time.time() * 1000), tb_token, pvid)
-        print(url)
         headers = {
             'Host': 'pub.alimama.com',
             'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -860,79 +1088,36 @@ class Alimama:
 
         return r_url
 
-    def get_order(self, bot, msg, times, orderId, userInfo, puid, raw):
+    def get_order(self, bot, msg, orderId, userInfo, puid, raw):
 
-        timestr = re.sub('-', '', times)
+        timestr = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         order_id = int(orderId)
 
         cm = ConnectMysql()
 
-        # 查询用户是否有上线
         check_order_sql = "SELECT * FROM taojin_order WHERE order_id='" + str(order_id) + "' AND bot_puid = '" +bot.self.puid+ "';"
         check_order_res = cm.ExecQuery(check_order_sql)
 
         # 判断该订单是否已经提现
         if len(check_order_res) >= 1:
             cm.Close()
-            send_text ='''
+            sendtext ='''
 一一一一 订单消息 一一一一
 
-订单【%s】已经成功返利，请勿重复提交订单信息！
-回复【个人信息】 查看订单及返利信息
-如有疑问！请联系管理员
+订单【%s】提交成功，请勿重复提交
             ''' % (msg['Text'])
-            return {"info":"order_exit","send_text":send_text}
+            return sendtext
 
-        endTime = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status) VALUES('"+ bot.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '1', '"+ puid +"', '"+ bot.self.puid +"', '1')")
 
-        startTime = str((datetime.date.today() - relativedelta(months=+1)))
+        send_text ='''
+一一一一 订单消息 一一一一
 
-        t = str(round(time.time()))
+订单【%s】提交成功，请耐心等待订单结算
+结算成功后机器人将自动返利到您个人账户
 
-        try:
-            url = "http://pub.alimama.com/report/getTbkPaymentDetails.json?startTime="+startTime+"&endTime="+endTime+"&payStatus=3&queryType=1&toPage=1&perPageSize=50&total=&t="+t+"&pvid=&_tb_token_=f8b388e3f3e37&_input_charset=utf-8"
-
-            headers = {
-                "Accept": "application/json, text/javascript, */*; q=0.01",
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-                "Cache-Control": "no-cache",
-                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "Host": "pub.alimama.com",
-                "Pragma": "no-cache",
-                "Referer": "http://pub.alimama.com/myunion.htm?spm=a219t.7900221/1.a214tr8.2.3d7c75a560ieiE",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0",
-                "X-Requested-With": "XMLHttpRequest"
-            }
-
-            res = self.get_url(url, headers)
-
-            res_dict = json.loads(res.text)
-
-            for item in res_dict['data']['paymentList']:
-                if int(order_id) == int(item['taobaoTradeParentId']):
-                    res = self.changeInfo(bot, msg, item, order_id, userInfo, timestr, puid, raw)
-                    return res
-
-            user_text = '''
-一一一一订单信息一一一一
-
-订单返利失败！
-
-失败原因：
-【1】未确认收货（打开App确认收货后重新发送）
-【2】当前商品不是通过机器人购买
-【3】查询格式不正确(正确格式：2018-03-20,73462222028 )
-【4】订单完成日期错误，请输入正确的订单查询日期
-【6】订单号错误，请输入正确的订单号
-
-请按照提示进行重新操作！
-            '''
-
-            return {'info': 'not_order', 'user_text': user_text}
-        except Exception as e:
-            self.logger.debug(e)
-            return {"info":"feild"}
+        ''' % (order_id)
+        return send_text
 
     def changeInfo(self, bot, msg, info, order_id, userInfo, timestr, puid, raw):
         try:
@@ -957,11 +1142,8 @@ class Alimama:
                     user_text = '''
     一一一一订单信息一一一一
 
-    订单返利失败！
+    返利失败，订单信息有误
 
-    失败原因：当前商品不是通过当前机器人购买
-
-    请按照提示进行重新操作！
                     '''
                     return {'info': 'not_order', 'user_text': user_text}
 
@@ -975,7 +1157,7 @@ class Alimama:
                     get_parent_info = cm.ExecQuery(get_parent_sql)
 
                     # 计算返佣
-                    add_balance = round(float(info['feeString']) * 0.3, 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3t')), 2)
                     # 累加余额
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     # 累加淘宝总返利
@@ -983,7 +1165,7 @@ class Alimama:
                     # 累加总返利
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                    jishen = (float(get_query_info[0][3]) - float(info['realPayFeeString']))
+                    jishen = (float(get_query_info[0][4]) - float(info['realPayFeeString']))
 
                     if jishen < 0:
                         jishen = 0
@@ -996,12 +1178,12 @@ class Alimama:
                     taobao_order_num = int(check_user_res[0][13]) + 1
 
                     # 邀请人返利金额
-                    add_parent_balance = round(float(info['feeString']) * 0.1, 2)
+                    add_parent_balance = round(float(info['feeString']) * float(config.get('BN', 'bn4')), 2)
 
                     # 给邀请人好友返利加上金额
                     friends_rebatr = float(get_parent_info[0][19]) + float(add_balance)
                     # 邀请人总钱数加上返利金额
-                    withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * 0.1, 2)
+                    withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_balance) * float(config.get('BN', 'bn4')), 2)
 
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
                     cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
@@ -1061,33 +1243,33 @@ class Alimama:
                     parent_user_text = '''
     一一一一  推广信息 一一一一
 
-    您的好友【%s】又完成了一笔订单，返利提成%s元已发放到您的账户
-    回复【个人信息】查询账户信息及提成
+    您的好友【%s】又完成了一笔订单
+    返利提成%s元已发放到您个人账户
+    回复【个人信息】可查询账户信息
                     ''' % (check_user_res[0][4], add_parent_balance)
 
                     user_text = '''
     一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
+    订单【%s】已完成
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查询账户信息
     回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
-
                     ''' % (order_id, add_balance)
                     cm.Close()
                     return {'parent_user_text': parent_user_text, 'user_text': user_text, 'info': 'success', 'parent': get_parent_info[0][4]}
                 else:
-                    add_balance = round(float(info['feeString']) * 0.3, 2)
+                    add_balance = round(float(info['feeString']) * float(config.get('BN', 'bn3t')), 2)
                     withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
                     taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
                     total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
 
-                    jishen = (float(get_query_info[0][3]) - float(info['realPayFeeString']))
+                    jishen = (float(get_query_info[0][4]) - float(info['realPayFeeString']))
 
                     if jishen < 0:
                         jishen = 0
 
-                    save_money = round(check_user_res[0][10] + (float(get_query_info[0][3]) - float(info['realPayFeeString'])) + add_balance, 2)
+                    save_money = round(check_user_res[0][10] + (float(get_query_info[0][4]) - float(info['realPayFeeString'])) + add_balance, 2)
                     total_order_num = int(check_user_res[0][11]) + 1
                     taobao_order_num = int(check_user_res[0][13]) + 1
 
@@ -1139,16 +1321,16 @@ class Alimama:
                     user_text = '''
     一一一一系统消息一一一一
 
-    订单【%s】已完成！
-    返利金%s元已发放到您的个人账户！
-
+    订单【%s】已完成
+    返利金%s元已发放到您的个人账户
+    回复【个人信息】可查询账户信息
     回复【提现】可申请账户余额提现
-    回复【个人信息】可看个当前账户信息
                                 ''' % (order_id, add_balance)
                     cm.Close()
                     return {'user_text': user_text, 'info': 'not_parent_and_success'}
         except Exception as e:
-            self.logger(e)
+            trace = traceback.format_exc()
+            self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {'info': 'feild'}
 
     # 定时获取淘宝订单信息
