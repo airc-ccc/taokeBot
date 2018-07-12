@@ -138,7 +138,7 @@ class Alimama:
             ress = requests.get(couurl)
             urlToToken = json.loads(ress.text)['model']
             # 红包：券后价 * 佣金比例 / 100
-            fx = round(round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100, 2)
+            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
 
             # 更换符号
             tu = {0: '🗝', 1: '📲', 2: '🎵'}
@@ -413,7 +413,7 @@ class Alimama:
             ress = requests.get(couurl)
             urlToToken = json.loads(ress.text)['model']
             # 红包：券后价 * 佣金比例 / 100
-            fx = round(round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100, 2)
+            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
 
             # 更换符号
             tu = {0: '🗝', 1: '📲', 2: '🎵'}
