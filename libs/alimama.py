@@ -407,10 +407,10 @@ class Alimama:
             coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
-
-            couurl = f"http://api.hitui.net/Kl_Create?appkey=JoB3RIns&text={resj['content']}&url={coupon_link['coupon_click_url']}&logo={resj['pic_url']}"
+            ress=requests.get('http://123.56.217.225:8082/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
             # 优惠券链接转淘口令
-            ress = requests.get(couurl)
+            print('优惠券转淘口令')
+            print(ress.text)
             urlToToken = json.loads(ress.text)['model']
             # 红包：券后价 * 佣金比例 / 100
             fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
