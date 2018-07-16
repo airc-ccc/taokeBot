@@ -111,6 +111,7 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
+            print('idididiidididiidididiididid', id)
             # 获取优惠券链接
             datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
             coupon_link = json.loads(datares.text)
