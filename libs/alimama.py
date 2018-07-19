@@ -102,7 +102,6 @@ class Alimama:
             # res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
             res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
-            print(resj)
             id = ''
             urlToToken=''
             if 'https://item.taobao.com' in resj['url']:
@@ -111,22 +110,20 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
-            print('idididiidididiidididiididid', id)
+            url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             # 获取优惠券链接
-            datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
+            datares = requests.get(url3)
             coupon_link = json.loads(datares.text)
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
+				# 推荐链接
+                tui_url = 'http://tuijian.ptjob.net/www/public/index.html#/index/' + id
                 text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品优惠券已领完，为您精选如下优惠券商品
 
-京东优惠券商城：
-'''+config.get('URL', 'jdshop')+'''
-淘宝优惠券商城：
-'''+config.get('URL', 'tbshop')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
+精选好券:'''+tui_url+'''
+
                                 '''
                 return text
 
@@ -134,9 +131,8 @@ class Alimama:
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            ress=requests.get('http://123.56.217.225:8082/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
+            ress=requests.get('http://tuijian.ptjob.net/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
             # 优惠券链接转淘口令
-            print(ress.text)
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
             fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
@@ -377,7 +373,7 @@ class Alimama:
                 taokouling = re.search(r'€.*?€', msg['Text']).group()
 
 
-            res = requests.get('http://123.56.217.225:8082/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            res = requests.get('http://tuijian.ptjob.net/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
             id = ''
             urlToToken=''
@@ -391,26 +387,23 @@ class Alimama:
             datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
             coupon_link = json.loads(datares.text)
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
+# 推荐链接
+                tui_url = 'http://tuijian.ptjob.net/www/public/index.html#/index/' + id
                 text = '''
 一一一一 返利信息 一一一一
 
-亲，当前商品暂无优惠券,建议您换一个商品试试呢
+亲，当前商品优惠券已领完，为您精选如下优惠券商品
 
-京东优惠券商城：
-'''+config.get('URL', 'jdshop')+'''
-淘宝优惠券商城：
-'''+config.get('URL', 'tbshop')+'''
-邀请好友得返利说明：
-'''+config.get('URL', 'lnvit')+'''
+精选好券:'''+tui_url+'''
+
                                 '''
                 return text
 
             coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
-            ress=requests.get('http://123.56.217.225:8082/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
+            ress=requests.get('http://tuijian.ptjob.net/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
             # 优惠券链接转淘口令
-            print(ress.text)
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
             fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
