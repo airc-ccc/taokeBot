@@ -80,7 +80,6 @@ def auto_accept_friends(msg):
         if sourcname:
             # 通过好友验证
             new_friend = msg.card.accept()
-            print('PUIDIDIDIIDIDIDIDI', new_friend.puid)
             # 获取生成的备注
             ramerkName = ort.generateRemarkName(bot)
             # 修改备注

@@ -36,6 +36,8 @@ class Orther(object):
         # 如果数据不为空，return
         if is_ext != ():
             return
+
+        print()
         # 判断是否有邀请人
         if lnivt_code == 0:
             # 没有邀请人，插入新用户
