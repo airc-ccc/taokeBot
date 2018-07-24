@@ -113,7 +113,7 @@ class Alimama:
             url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             print(url3)
             # 获取优惠券链接
-            datares = requests.get(url3)
+            datares = requests.get(url3, headers={'Connection':'close'})
             coupon_link = json.loads(datares.text)
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 # 推荐链接
@@ -386,7 +386,7 @@ class Alimama:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
             # 获取优惠券链接
-            datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')))
+            datares = requests.get('http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION')), headers={'Connection':'close'})
             coupon_link = json.loads(datares.text)
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 # 推荐链接
