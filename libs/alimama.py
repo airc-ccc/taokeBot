@@ -112,7 +112,7 @@ class Alimama:
                 id = potten[1].split('.htm')[0]
             url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             # 获取优惠券链接
-            datares = requests.get(url3)
+            datares = requests.get(url3, headers={'Connection':'close'})
             coupon_link = json.loads(datares.text)
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 # 推荐链接
