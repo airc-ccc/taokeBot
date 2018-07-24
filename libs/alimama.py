@@ -100,7 +100,7 @@ class Alimama:
                 taokouling = re.search(r'€.*?€', msg['Text']).group()
 
             # res = requests.get('http://api.hitui.net/Kl_Query?appkey=JoB3RIns&content=' + taokouling)
-            res = requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            res = requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling, headers={'Connection':'close'})
             resj = json.loads(res.text)
             id = ''
             urlToToken=''
@@ -133,7 +133,7 @@ class Alimama:
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
 
-            ress=requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
+            ress=requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
             # 优惠券链接转淘口令
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
@@ -375,7 +375,7 @@ class Alimama:
                 taokouling = re.search(r'€.*?€', msg['Text']).group()
 
 
-            res = requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
+            res = requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling, headers={'Connection':'close'})
             resj = json.loads(res.text)
             id = ''
             urlToToken=''
@@ -404,7 +404,7 @@ class Alimama:
             coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
             # 获取优惠券金额
             coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
-            ress=requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'])
+            ress=requests.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
             # 优惠券链接转淘口令
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
