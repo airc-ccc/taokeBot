@@ -16,11 +16,12 @@ class newOrder:
         self.config = configparser.ConfigParser()
         self.config.read('config.conf', encoding="utf-8-sig")
         self.bot = bot
+        self.se = requests.session()
+        self.getTaobaoOrder()
 
     '''
         获取淘宝订单    
     '''
-    @staticmethod
     def getTaobaoOrder(self):
         cm = ConnectMysql()
 
@@ -30,10 +31,13 @@ class newOrder:
         # 定义订单的几种状态，便于存储
         status = {'订单结算': 1, '订单付款': 2, '订单失效': 3, '订单成功': 4}
         # 请求订单接口
-        url = 'http://tuijian.ptjob.net/phpsdk/sdkList/orderGet.php?startTime=' + str(yesterDay) + 'endTime=' + str(datetime.date.today())
-        res = requests.get(url)
+        url = 'http://tuijian.ptjob.net/phpsdk/sdkList/orderGet.php?startTime=' + str(yesterDay) + '&endTime=' + str(datetime.date.today())
+        print(url)
+        res = self.se.get(url)
+        print(res.text)
         # 转json
         resj = json.loads(res.text)
+        print(resj)
         # 数据存入数据库
         for item in resj:
             is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='" + item['cate'] + "';"
