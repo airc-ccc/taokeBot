@@ -42,6 +42,7 @@ class Alimama:
 
             res = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
+            print(resj)
             if 'https://item.taobao.com' in resj['url']:
                 potten2 = resj['url'].split('&id=')
                 id = potten2[1].split('&sourceType')[0]
@@ -49,9 +50,11 @@ class Alimama:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
             url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
+            print(url3)
             # 获取优惠券链接
             datares = self.se.get(url3)
-            coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
+            coupon_link = json.loads(datares.text)
+            coupon_link2 = coupon_link['tbk_privilege_get_response']['result']['data']
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 if 'price' not in resj:
 					# 如果没有佣金，推荐
@@ -74,7 +77,7 @@ class Alimama:
                 print(taoken2)
 				
                 # 红包：券后价 * 佣金比例 / 100
-                fx2 = round((round(float(resj['price']) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
+                fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
                 # 没有优惠券
                 res_text = '''
 一一一一返利信息一一一一
@@ -91,13 +94,13 @@ class Alimama:
                                                         ''' % (resj['content'], resj['price'], fx2, taoken2)
                 return res_text
             # 获取优惠券金额
-            coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
+            coupon_price = coupon_link2['coupon_info'].split('减')[1].split('元')[0]
 
-            ress=self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
+            ress=self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link2['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
             # 优惠券链接转淘口令
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
-            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
+            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
 
             # 更换符号
             tu = {0: '🗝', 1: '📲', 2: '🎵'}
@@ -164,7 +167,8 @@ class Alimama:
             url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             # 获取优惠券链接
             datares = self.se.get(url3)
-            coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
+            coupon_link = json.loads(datares.text)
+            coupon_link2 = coupon_link['tbk_privilege_get_response']['result']['data']
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 if 'price' not in resj:
 					# 如果没有佣金，推荐
@@ -187,7 +191,7 @@ class Alimama:
                 print(taoken2)
 				
                 # 红包：券后价 * 佣金比例 / 100
-                fx2 = round((round(float(resj['price']) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
+                fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
                 # 没有优惠券
                 res_text = '''
 一一一一返利信息一一一一
@@ -206,12 +210,12 @@ class Alimama:
 
             coupon_link = json.loads(datares.text)['tbk_privilege_get_response']['result']['data']
             # 获取优惠券金额
-            coupon_price = coupon_link['coupon_info'].split('减')[1].split('元')[0]
-            ress=self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
+            coupon_price = coupon_link2['coupon_info'].split('减')[1].split('元')[0]
+            ress=self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title='+resj['content']+'&counp_link='+coupon_link2['coupon_click_url']+'&image_link='+resj['pic_url'], headers={'Connection':'close'})
             # 优惠券链接转淘口令
             urlToToken = json.loads(ress.text)['data']['model']
             # 红包：券后价 * 佣金比例 / 100
-            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
+            fx = round((round((float(resj['price']) - int(coupon_price)) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
 
             # 更换符号
             tu = {0: '🗝', 1: '📲', 2: '🎵'}
