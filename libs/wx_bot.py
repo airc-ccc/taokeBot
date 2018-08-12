@@ -35,7 +35,7 @@ class tbAndJd(object):
                 # 不存在就去创建
                 self.ort.create_user_info(raw, bot, msg, 0, tool=False)
             # 调用淘宝获取商品优惠信息
-            return self.al.getTao(bot, msg, raw)
+            return self.al.getTao(msg)
         elif msg['Type'] == 'Sharing':  # 分享型消息
             res = self.ort.ishaveuserinfo(bot, msg, raw)
             if res['res'] == 'not_info':
@@ -58,7 +58,7 @@ class tbAndJd(object):
     def check_if_is_group(self, msg, bot, raw):
         #if re.search(r'【.*】', msg['Text']) and (u'打开👉手机淘宝👈' in msg['Text'] or u'打开👉手淘👈' in msg['Text'] or u'打开👉淘宝👈' in msg['Text'] or u'咑|開👉氵匋 宝👈' in msg['Text']) and ():
         if re.search(r'【.*】', msg['Text']) and (u'👈' in msg['Text'] or u'👉' in msg['Text']):
-            return self.al.getGroupTao(raw, bot, msg)
+            return self.al.getGroupTao(msg)
         elif msg['Type'] == 'Sharing':
             htm = re.findall(r"<appname>.*?</appname>", msg['Content'])
             if htm:

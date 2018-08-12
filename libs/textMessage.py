@@ -63,6 +63,7 @@ class TextMessage:
                 tburl = quote(config.get('URL', 'tbshopingurl') + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
+                print('WEEWEWEW', msg)
                 text = '''
 一一一一系统消息一一一一
 亲,以下是【%s】优惠券集合
@@ -307,7 +308,7 @@ http://t.cn/RnAKafe
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.al.get_order(bot, msg, msg['Text'], wei_info, raw.sender.puid, raw)
+                res = self.al.get_order(msg, msg['Text'], wei_info, raw.sender.puid)
 
                 return res
             elif ('-' in msg['Text']) and (len(msg['Text'].split('-')[1]) == 15) and (len(msg['Text']) == 22):

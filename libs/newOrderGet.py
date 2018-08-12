@@ -4,6 +4,7 @@ import datetime
 import requests
 import traceback
 import configparser
+from threading import Thread
 from libs.mysql import ConnectMysql
 
 '''
@@ -20,84 +21,101 @@ class newOrder:
         self.getTaobaoOrder()
 
     '''
+        定时淘宝订单
+    '''
+    def start_keep_get_alimama_order(self):
+        t = Thread(target=self.getTaobaoOrder, args=())
+        t.setDaemon(True)
+        t.start()
+
+    '''
         获取淘宝订单    
     '''
     def getTaobaoOrder(self):
-        cm = ConnectMysql()
+        if self.config.get('SYS', 'tb') == 'yes':
+            while True:
+                nowtime = time.strftime('%H:%M', time.localtime(time.time()))
+                if self.config.get('TIME', 'tbend') > nowtime > self.config.get('TIME', 'tbstart'):
+                    cm = ConnectMysql()
 
-        # 前60天的时间
-        yesterDay = datetime.date.today() - datetime.timedelta(days=60)
+                    # 前60天的时间
+                    yesterDay = datetime.date.today() - datetime.timedelta(days=60)
 
-        # 定义订单的几种状态，便于存储
-        status = {'订单结算': 1, '订单付款': 2, '订单失效': 3, '订单成功': 4}
-        # 请求订单接口
-        url = 'http://tuijian.ptjob.net/phpsdk/sdkList/orderGet.php?startTime=' + str(yesterDay) + '&endTime=' + str(datetime.date.today())
-        print(url)
-        res = self.se.get(url)
-        print(res.text)
-        # 转json
-        resj = json.loads(res.text)
-        print(resj)
-        # 数据存入数据库
-        for item in resj:
-            is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='" + item['cate'] + "';"
-            # 判断数据是否存在
-            is_ext = cm.ExecQuery(is_sql)
-            if is_ext == ():
-                in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid) VALUES('" + item['cate'] + "', '" + item['good_id'] + "', '" + item['good_title'] + "', '" + str(item['good_price']) + "', '" + str(item['good_num']) + "', '" + str(item['amount_pay']) + "', '1', '" + str(status[item['order_state']]) + "', '" + str(item['commission_percent']) + "', '" + item['add_time'] + "', '" + item['settlement_time'] + "', '" + self.bot.self.puid + "')"
-                cm.ExecNonQuery(in_sql)
-            else:
-                del_sql = "DELETE FROM taojin_get_orders WHERE order_id='" + item['cate'] + "';"
-                cm.ExecNonQuery(del_sql)
-                in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid) VALUES('" + item['cate'] + "', '" + item['good_id'] + "', '" + item['good_title'] + "', '" + str(item['good_price']) + "', '" + str(item['good_num']) + "', '" + str(item['amount_pay']) + "', '1', '" + str(status[item['order_state']]) + "', '" + str(item['commission_percent']) + "', '" + item['add_time'] + "', '" + item['settlement_time'] + "', '" + self.bot.self.puid + "')"
-                cm.ExecNonQuery(in_sql)
+                    # 定义订单的几种状态，便于存储
+                    status = {'订单结算': 1, '订单付款': 2, '订单失效': 3, '订单成功': 4}
+                    # 请求订单接口
+                    url = 'http://tuijian.ptjob.net/phpsdk/sdkList/orderGet.php?startTime=' + str(yesterDay) + '&endTime=' + str(datetime.date.today())
+                    print('!!!!!!!!!!!Order Get Url is', url)
+                    res = self.se.get(url)
+                    # print('Get the orders', res.text)
+                    # 转json
+                    resj = json.loads(res.text)
+                    print(len(resj))
+                    # 数据存入数据库
+                    for item in resj:
+                        is_sql = "SELECT * FROM taojin_get_orders WHERE order_id='" + item['cate'] + "';"
+                        # 判断数据是否存在
+                        is_ext = cm.ExecQuery(is_sql)
+                        if is_ext == ():
+                            in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid) VALUES('" + str(item['cate']) + "', '" + str(item['good_id']) + "', '" + item['good_title'] + "', '" + str(item['good_price']) + "', '" + str(item['good_num']) + "', '" + str(item['amount_pay']) + "', '1', '" + str(status[item['order_state']]) + "', '" + item['commission_percent'] + "', '" + str(item['add_time']) + "', '" + str(item['settlement_time']) + "', '" + self.bot.self.puid + "')"
+                            cm.ExecNonQuery(in_sql)
+                        else:
+                            del_sql = "DELETE FROM taojin_get_orders WHERE order_id='" + item['cate'] + "';"
+                            cm.ExecNonQuery(del_sql)
+                            in_sql = "INSERT INTO taojin_get_orders(order_id, good_id, good_name, good_price, good_num, order_price, order_source, order_status, order_commission, create_time, settlement_time, bot_puid) VALUES('" + str(item['cate']) + "', '" + str(item['good_id']) + "', '" + item['good_title'] + "', '" + str(item['good_price']) + "', '" + str(item['good_num']) + "', '" + str(item['amount_pay']) + "', '1', '" + str(status[item['order_state']]) + "', '" + item['commission_percent'] + "', '" + str(item['add_time']) + "', '" + str(item['settlement_time']) + "', '" + self.bot.self.puid + "')"
+                            cm.ExecNonQuery(in_sql)
 
-        # 获取用户的订单
-        user_orders = cm.ExecQuery("SELECT * FROM taojin_order WHERE status='1' AND order_source = '1' AND bot_puid='" + self.bot.self.puid + "'  AND completion_time>'" + yesterDay + "';")
-        user_orders_id_list = []
-        for item in user_orders:
-            user_orders_id_list.append(item[3])
+                    # 获取用户的订单
+                    user_orders = cm.ExecQuery("SELECT * FROM taojin_order WHERE status='1' AND order_source = '1' AND bot_puid='" + self.bot.self.puid + "'  AND completion_time>'" + str(yesterDay) + "';")
+                    user_orders_id_list = []
+                    for item in user_orders:
+                        user_orders_id_list.append(item[3])
 
-        # 把获取到的订单信息收集到list里，方便操作数据
-        orders_list = []
-        for item2 in resj:
-            orders_list.append(item2['cate'])
+                    # 把获取到的订单信息收集到list里，方便操作数据
+                    orders_list = []
+                    for item2 in resj:
+                        orders_list.append(item2['cate'])
 
-        # 遍历用户订单和获取到的订单对比，根据订单状态不同给用户返利或不返利
-        for item3 in user_orders_id_list:
-            if item3 in orders_list:
-                userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE order_id=" + item3 + "")
-                userOrder2 = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id=" + item3 + "")
-                userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='" + userOrder2[0][7] + "'")
-                # 根据订单状态进行回复和结算奖金
-                if userOrder[0][7] == 4 or userOrder[0][7] == 1:
-                    # 已结算
-                    self.changeInfoAlimama(userOrder2[0][7], userOrder[0])
-                    up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                    cm.ExecNonQuery(up_set_sql)
-                elif userOrder[0][7] == 3:
-                    send_text = '''
-    ---------- 订单信息 -----------
-
-    订单【%s】已失效
-                                ''' % (item3)
-                    up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                    cm.ExecNonQuery(up_set_sql)
-                    user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
-                    user.send(send_text)
-            else:
-                userOrder = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id=" + item3 + "")
-                userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='" + userOrder[0][7] + "'")
-                send_text = '''
-    ---------订单消息----------
-
-    订单【%s】返利失败
-    该笔订单非通过机器人购买
-                            ''' % (item3)
-                up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
-                cm.ExecNonQuery(up_set_sql)
-                user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
-                user.send(send_text)
+                    # 遍历用户订单和获取到的订单对比，根据订单状态不同给用户返利或不返利
+                    for item3 in user_orders_id_list:
+                        if item3 in orders_list:
+                            userOrder = cm.ExecQuery("SELECT * FROM taojin_get_orders WHERE order_id=" + item3 + "")
+                            userOrder2 = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id=" + item3 + "")
+                            userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='" + userOrder2[0][7] + "'")
+                            # 根据订单状态进行回复和结算奖金
+                            if userOrder[0][7] == 4 or userOrder[0][7] == 1:
+                                # 已结算
+                                self.changeInfoAlimama(userOrder2[0][7], userOrder[0])
+                                up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
+                                cm.ExecNonQuery(up_set_sql)
+                            elif userOrder[0][7] == 3:
+                                send_text = '''
+                ---------- 订单信息 -----------
+            
+                订单【%s】已失效
+                                            ''' % (item3)
+                                up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
+                                cm.ExecNonQuery(up_set_sql)
+                                user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
+                                user.send(send_text)
+                        else:
+                            userOrder = cm.ExecQuery("SELECT * FROM taojin_order WHERE order_id=" + item3 + "")
+                            userInfo = cm.ExecQuery("SELECT * FROM taojin_user_info WHERE puid='" + userOrder[0][7] + "'")
+                            send_text = '''
+                ---------订单消息----------
+            
+                订单【%s】返利失败
+                该笔订单非通过机器人购买
+                                        ''' % (item3)
+                            up_set_sql = "UPDATE taojin_order SET status='2' WHERE order_id='" + str(item3) + "';"
+                            cm.ExecNonQuery(up_set_sql)
+                            user = self.bot.friends().search(nick_name=userInfo[0][4])[0]
+                            user.send(send_text)
+                    time.sleep(7200)
+                else:
+                    print('!!!! tb time not start, now time is %s .......' % nowtime)
+                    time.sleep(1800)
+                    continue
 
     '''
         执行返利，并修改用户信息
