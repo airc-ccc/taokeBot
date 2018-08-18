@@ -50,12 +50,12 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
-            url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
-            print(url3)
+            url3 = 'http://api.hitui.net/privilege?type=2&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
+
             # 获取优惠券链接
             datares = self.se.get(url3)
             coupon_link = json.loads(datares.text)
-
+            print(coupon_link)
             # 如果接口返回错误信息
             if 'error_response' in coupon_link:
                 tui_ur2l = 'http://tuijian.ptjob.net/www/public/index.html%23/index/' + id
@@ -88,9 +88,13 @@ class Alimama:
                     return text
 
                 # 普通商品转淘口令
-                taoken2 = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/goodToKen.php?goodid=' + id)
-                taoken2 = json.loads(taoken2.text)['data']['taoToken']
-                print(taoken2)
+                ress = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title=' + resj[
+                    'content'] + '&counp_link=' + coupon_link2['coupon_click_url'] + '&image_link=' + resj['pic_url'],
+                                   headers={'Connection': 'close'})
+                print('eeeeeeeeeeeeccccc', 'http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title=' + resj[
+                    'content'] + '&counp_link=' + coupon_link2['coupon_click_url'] + '&image_link=' + resj['pic_url'])
+                # 优惠券链接转淘口令
+                taoken2 = json.loads(ress.text)['data']['model']
 				
                 # 红包：券后价 * 佣金比例 / 100
                 fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
@@ -201,7 +205,7 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
-            url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (
+            url3 = 'http://api.hitui.net/privilege?type=2&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (
             id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             print(url3)
             # 获取优惠券链接
@@ -240,9 +244,13 @@ class Alimama:
                     return text
 
                 # 普通商品转淘口令
-                taoken2 = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/goodToKen.php?goodid=' + id)
-                taoken2 = json.loads(taoken2.text)['data']['taoToken']
-                print(taoken2)
+                ress = self.se.get(
+                    'http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title=' + resj[
+                        'content'] + '&counp_link=' + coupon_link2['coupon_click_url'] + '&image_link=' + resj[
+                        'pic_url'],
+                    headers={'Connection': 'close'})
+                # 优惠券链接转淘口令
+                taoken2 = json.loads(ress.text)['data']['model']
 
                 # 红包：券后价 * 佣金比例 / 100
                 fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(

@@ -308,7 +308,7 @@ http://t.cn/RnAKafe
                 if res2['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                res = self.al.get_order(msg, msg['Text'], wei_info, raw.sender.puid)
+                res = self.al.get_order(msg, msg['Text'], wei_info, raw.sender.puid) 
 
                 return res
             elif ('-' in msg['Text']) and (len(msg['Text'].split('-')[1]) == 15) and (len(msg['Text']) == 22):
