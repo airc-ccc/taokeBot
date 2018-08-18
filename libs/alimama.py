@@ -27,6 +27,7 @@ class Alimama:
         if config.get('SYS', 'tb') == 'no':
             text = '''
 一一一一系统信息一一一一
+
 机器人在升级中, 暂不支持淘宝商品查询
                     '''
             return text
@@ -62,9 +63,10 @@ class Alimama:
                 shortUr2l = self.movie.getShortUrl(tui_ur2l)
                 r_text = '''
 一一一一 返利信息 一一一一
+
 亲, 宝贝已下架或非淘客宝贝！
-为您精选如下相似商品
-精选好券:'''+shortUr2l+'''
+为您推荐如下商品:
+'''+shortUr2l+'''
                 
                 '''
                 return r_text
@@ -217,11 +219,11 @@ class Alimama:
                 tui_ur2l = 'http://tuijian.ptjob.net/www/public/index.html%23/index/' + id
                 shortUr2l = self.movie.getShortUrl(tui_ur2l)
                 r_text = '''
-            一一一一 返利信息 一一一一
-            亲, 宝贝已下架或非淘客宝贝！
-            为您精选如下相似商品
-            精选好券:''' + shortUr2l + '''
+一一一一 返利信息 一一一一
 
+亲, 宝贝已下架或非淘客宝贝！
+为您精选如下商品:
+''' + shortUr2l + '''
                             '''
                 return r_text
 
@@ -234,11 +236,11 @@ class Alimama:
                     tui_url = 'http://tuijian.ptjob.net/www/public/index.html%23/index/' + id
                     shortUrl = self.movie.getShortUrl(tui_url)
                     text = '''
-             一一一一 返利信息 一一一一
+ 一一一一 返利信息 一一一一
 
-             亲，当前商品优惠券已领完，为您精选如下优惠券商品
+ 亲，当前商品优惠券已领完，为您精选如下优惠券商品
 
-             精选好券:''' + shortUrl + '''
+ 精选好券:''' + shortUrl + '''
 
                                              '''
                     return text
