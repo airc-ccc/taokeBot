@@ -164,7 +164,7 @@ http://t.cn/RnAKMul
 京东优惠券商城：
 http://jdyhq.ptjob.net
 淘宝优惠券商城：
-http://taoquan.ptjob.net
+http://xiaoquan.ptjob.net
 邀请好友得返利说明：
 http://t.cn/RnAKafe
             
@@ -187,8 +187,10 @@ http://t.cn/RnAKafe
                     text2 = '''
 一一一一 提现信息 一一一一
 
-提现申请失败，账户余额低于%s元！
-                                                        ''' % (config.get('SYS', 'tixianprice'))
+提现申请失败
+当前账户余额为%s
+最小提现金额为%s元！
+                                                        ''' % (select_user_res[0][9], config.get('SYS', 'tixianprice'))
                     return text2
 
                 adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
@@ -362,7 +364,7 @@ http://t.cn/RnAKafe
 
                 jdurl = quote("http://jdyhq.ptjob.net/?r=search?kw=" + msg['Text'][1:], safe='/:?=&')
 
-                tburl = quote('http://taoquan.ptjob.net/index.php?kw=' + msg['Text'][1:], safe='/:?=&')
+                tburl = quote('http://xiaoquan.ptjob.net/index.php?kw=' + msg['Text'][1:], safe='/:?=&')
                 res1 = self.movie.getShortUrl(jdurl)
                 res2 = self.movie.getShortUrl(tburl)
                 text = '''
