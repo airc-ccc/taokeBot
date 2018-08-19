@@ -171,17 +171,27 @@ http://t.cn/RnAKafe
                         '''
                 return text
             elif pattern_tixian.search(msg['Text']) != None:
+
                 cm = ConnectMysql()
                 res = self.ort.ishaveuserinfo(bot, msg, raw)
 
                 if res['res'] == 'not_info':
                     self.ort.create_user_info(raw, bot, msg, 0, tool=False)
 
-                adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
                 select_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + raw.sender.puid + "' AND bot_puid='"+ bot.self.puid+"';"
                 select_user_res = cm.ExecQuery(select_user_sql)
                 timestr = round(time.time())
                 timestr2 = repr(timestr)
+                # 设置提现门槛
+                if float(select_user_res[0][9]) < int(config.get('SYS', 'tixianprice')):
+                    text2 = '''
+一一一一 提现信息 一一一一
+
+提现申请失败，账户余额低于%s元！
+                                                        ''' % (config.get('SYS', 'tixianprice'))
+                    return text2
+
+                adminuser = bot.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
                 if float(select_user_res[0][9]) > 0:
                     # 修改余额
                     update_sql = "UPDATE taojin_user_info SET withdrawals_amount='0', update_time='"+ timestr2 +"' WHERE puid='"+raw.sender.puid+"' AND bot_puid='"+ bot.self.puid +"';"
@@ -197,8 +207,8 @@ http://t.cn/RnAKafe
 提现金额：%s元
 提现时间：%s
                                         ''' % (
-                    bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
-                    time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                        bot.self.nick_name, wei_info['NickName'], select_user_res[0][9],
+                        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
                     cm.ExecNonQuery(update_sql)
                     cm.ExecNonQuery(update_total_sql)

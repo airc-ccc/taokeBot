@@ -44,7 +44,7 @@ class Alimama:
 
             res = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
-            print('!!!resj', resj)
+            # print('!!!resj', resj)
             if 'https://item.taobao.com' in resj['url']:
                 potten2 = resj['url'].split('&id=')
                 id = potten2[1].split('&sourceType')[0]
@@ -56,7 +56,7 @@ class Alimama:
             # 获取优惠券链接
             datares = self.se.get(url3)
             coupon_link = json.loads(datares.text)
-            print(coupon_link)
+            #print(coupon_link)
             # 如果接口返回错误信息
             if 'error_response' in coupon_link:
                 tui_ur2l = 'http://tuijian.ptjob.net/www/public/index.html%23/index/' + id
@@ -71,7 +71,7 @@ class Alimama:
                 '''
                 return r_text
 
-            print('coupon_link', coupon_link)
+            # print('coupon_link', coupon_link)
             coupon_link2 = coupon_link['tbk_privilege_get_response']['result']['data']
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 if 'price' not in resj:
@@ -93,11 +93,14 @@ class Alimama:
                 ress = self.se.get('http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title=' + resj[
                     'content'] + '&counp_link=' + coupon_link2['coupon_click_url'] + '&image_link=' + resj['pic_url'],
                                    headers={'Connection': 'close'})
-                print('eeeeeeeeeeeeccccc', 'http://tuijian.ptjob.net/phpsdk/sdkList/taobao_tbk_tpwd_create.php?title=' + resj[
-                    'content'] + '&counp_link=' + coupon_link2['coupon_click_url'] + '&image_link=' + resj['pic_url'])
                 # 优惠券链接转淘口令
                 taoken2 = json.loads(ress.text)['data']['model']
-				
+
+                # 更换符号
+                tu11 = {0: '🗝', 1: '📲', 2: '🎵'}
+                n11 = random.randint(0, 2)
+                tao_token11 = taoken2.replace(taoken2[:1], tu11[n11])
+                tao_token11 = tao_token11.replace(tao_token11[-1:], tu11[n11])
                 # 红包：券后价 * 佣金比例 / 100
                 fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(config.get('BN', 'bn3t')), 2)
                 # 没有优惠券
@@ -113,7 +116,7 @@ class Alimama:
 获取返红包步骤：
 1,复制本条消息打开淘宝领券
 2,下完单后复制订单号发给我
-                                                        ''' % (resj['content'], resj['price'], fx2, taoken2)
+                                                        ''' % (resj['content'], resj['price'], fx2, tao_token11)
                 return res_text
             # 获取优惠券金额
             coupon_price = coupon_link2['coupon_info'].split('减')[1].split('元')[0]
@@ -200,7 +203,7 @@ class Alimama:
             res = self.se.get(
                 'http://tuijian.ptjob.net/phpsdk/sdkList/taobao_wireless_share_tpwd_query.php?str=' + taokouling)
             resj = json.loads(res.text)
-            print('!!!resj', resj)
+            # print('!!!resj', resj)
             if 'https://item.taobao.com' in resj['url']:
                 potten2 = resj['url'].split('&id=')
                 id = potten2[1].split('&sourceType')[0]
@@ -209,7 +212,7 @@ class Alimama:
                 id = potten[1].split('.htm')[0]
             url3 = 'http://api.hitui.net/privilege?type=2&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (
             id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
-            print(url3)
+            # print(url3)
             # 获取优惠券链接
             datares = self.se.get(url3)
             coupon_link = json.loads(datares.text)
@@ -227,7 +230,7 @@ class Alimama:
                             '''
                 return r_text
 
-            print('coupon_link', coupon_link)
+            # print('coupon_link', coupon_link)
             coupon_link2 = coupon_link['tbk_privilege_get_response']['result']['data']
             if 'tbk_privilege_get_response' not in coupon_link or 'coupon_info' not in json.dumps(coupon_link):
                 if 'price' not in resj:
@@ -254,6 +257,11 @@ class Alimama:
                 # 优惠券链接转淘口令
                 taoken2 = json.loads(ress.text)['data']['model']
 
+                # 更换符号
+                tu11 = {0: '🗝', 1: '📲', 2: '🎵'}
+                n11 = random.randint(0, 2)
+                tao_token11 = taoken2.replace(taoken2[:1], tu11[n11])
+                tao_token11 = tao_token11.replace(tao_token11[-1:], tu11[n11])
                 # 红包：券后价 * 佣金比例 / 100
                 fx2 = round((round(float(resj['price']) * float(coupon_link2['max_commission_rate']), 2) / 100) * float(
                     config.get('BN', 'bn3t')), 2)
@@ -270,7 +278,7 @@ class Alimama:
 获取返红包步骤：
 1,复制本条消息打开淘宝领券
 2,下完单后复制订单号发给我
-                                                                    ''' % (resj['content'], resj['price'], fx2, taoken2)
+                                                                    ''' % (resj['content'], resj['price'], fx2, tao_token11)
                 return res_text
             # 获取优惠券金额
             coupon_price = coupon_link2['coupon_info'].split('减')[1].split('元')[0]
