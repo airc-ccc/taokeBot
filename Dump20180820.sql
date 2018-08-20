@@ -57,7 +57,7 @@ CREATE TABLE `taojin_get_orders` (
   `bot_puid` varchar(100) NOT NULL COMMENT '机器人puid',
   `pdd_order_id` varchar(100) DEFAULT NULL COMMENT '拼多多id',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=175 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=298 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -122,8 +122,11 @@ CREATE TABLE `taojin_order` (
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   `bot_puid` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `pdd_order_id` varchar(100) CHARACTER SET utf8 DEFAULT NULL,
+  `order_price` float DEFAULT NULL COMMENT '订单金额',
+  `total_commission_rate` float DEFAULT NULL COMMENT '佣金比例',
+  `total_commission_fee` float DEFAULT NULL COMMENT '用户返利',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -183,7 +186,7 @@ CREATE TABLE `taojin_query_record` (
   `chatroom` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '群聊昵称',
   `type` tinyint(1) NOT NULL COMMENT '1京东 2 淘宝 3 拼多多',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -203,7 +206,7 @@ CREATE TABLE `taojin_rebate_log` (
   `create_time` int(11) NOT NULL COMMENT 'åˆ›å»ºæ—¶é—´',
   `puid` varchar(255) CHARACTER SET utf8 NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -244,7 +247,7 @@ CREATE TABLE `taojin_user_info` (
   `pdd_completed_order` int(11) NOT NULL DEFAULT '0' COMMENT '拼多多订单完成数量',
   `pdd_unfinished_order` int(11) NOT NULL DEFAULT '0' COMMENT '拼多多订单未完成数量',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 CHECKSUM=1 DELAY_KEY_WRITE=1 ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -256,4 +259,4 @@ CREATE TABLE `taojin_user_info` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-08-04 19:21:57
+-- Dump completed on 2018-08-20 16:36:37
