@@ -16,7 +16,6 @@ from libs import alimama
 from libs import groupMessage
 from libs import wx_bot
 from libs import orther
-from libs import newOrderGet
 
 
 config = configparser.ConfigParser()
@@ -33,7 +32,6 @@ al = alimama.Alimama(mu, bot)
 wb = wx_bot.tbAndJd(bot)
 ort = orther.Orther()
 pdd = pingdd.Pdd(bot)
-# newOrder = newOrderGet.newOrder(bot)
 
 def taojin_init():
     # 根据参数，开启对应的服务

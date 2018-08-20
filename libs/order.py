@@ -35,7 +35,7 @@ class Order:
         self.al = alimama.Alimama(self.logger, self.bot)
         self.ort = orther.Orther()
         self.pdd = pingdd.Pdd(self.bot)
-        self.start_keep_get_alimama_order()
+        # self.start_keep_get_alimama_order()
         self.start_keep_get_jd_order()
         self.start_keep_get_pdd_order()
 
@@ -179,6 +179,7 @@ class Order:
                     continue
 
     def getJdOrderDetails(self):
+        print('ccccccccccccccccccccccccccccccccccccccddddddddddddddddddddddddddd')
         if self.config.get('SYS', 'jd') == 'yes':
             print('jd..start....')
             while True:
@@ -439,8 +440,8 @@ class Order:
                 # 邀请人总钱数加上返利金额
                 withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_parent_balance), 2)
 
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
+                cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='"+ str(save_money) +"', taobao_rebate_amount='"+ str(taobao_rebate_amount) +"', total_rebate_amount='"+ str(total_rebate_amount) +"', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='"+str(time.time())+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
+                cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(friends_rebatr)+"', update_time='"+str(time.time())+"' WHERE lnivt_code='" + str(check_user_res[0][17]) + "' AND bot_puid='"+ bot.self.puid +"';")
 
                 select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
                 # 订单已完成，修改备注
@@ -507,7 +508,7 @@ class Order:
 回复【提现】可申请账户余额提现
                 ''' % (orderInfo[1], add_balance)
 
-
+                cm.CommitMysql()
                 cm.Close()
 
                 parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
@@ -530,7 +531,7 @@ class Order:
                 total_order_num = int(check_user_res[0][11]) + 1
                 taobao_order_num = int(check_user_res[0][13]) + 1
 
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(
                     withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
                     taobao_rebate_amount) + "', total_rebate_amount='" + str(
                     total_rebate_amount) + "', order_quantity='"+str(total_order_num)+"', taobao_order_quantity='"+str(taobao_order_num)+"', update_time='" + str(time.time()) + "' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
@@ -580,11 +581,13 @@ class Order:
 回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
                             ''' % (orderInfo[1], add_balance)
+                cm.CommitMysql()
                 cm.Close()
 
                 this_user.send(user_text)
 
         except Exception as e:
+            cm.Rollback()
             trace = traceback.format_exc()
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {'info': 'feild'}
@@ -637,11 +640,11 @@ class Order:
                     # 京东订单数加一
                     jd_order_num = int(check_user_res[0][12]) + 1
 
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', jd_rebate_amount='" + str(jd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
-                    cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
+                    cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', jd_rebate_amount='" + str(jd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
+                    cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
 
 
-                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    #select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
                     # 订单已完成，修改备注
                     # order_num = cm.ExecQuery(select_order_num)
                     #
@@ -713,6 +716,7 @@ class Order:
                             ''' % (orderInfo[1], add_balance)
 
 
+                    cm.CommitMysql()
                     cm.Close()
                     parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
 
@@ -739,9 +743,9 @@ class Order:
 
                     up_sql = "UPDATE taojin_user_info SET jd_rebate_amount='" + str(jd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(jd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
 
-                    cm.ExecNonQuery(up_sql)
+                    cm.InsertM(up_sql)
 
-                    select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
+                    #select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
                     # 订单已完成，修改备注
                     # order_num = cm.ExecQuery(select_order_num)
                     #
@@ -787,9 +791,11 @@ class Order:
 回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
                                 ''' % (orderInfo[1], add_balance)
+                    cm.CommitMysql()
                     cm.Close()
                     this_user.send(user_text)
         except Exception as e:
+            cm.Rollback()
             trace = traceback.format_exc()
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {'info': 'feild'}
@@ -837,8 +843,8 @@ class Order:
                 pdd_order_num = int(check_user_res[0][26]) + 1
                 
                 # 更新数据
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', pdd_rebate_amount='" + str(pdd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', pdd_order_quantity='"+str(pdd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
-                cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
+                cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', pdd_rebate_amount='" + str(pdd) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', pdd_order_quantity='"+str(pdd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid +"';")
+                cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(withdrawals_amount2) + "', friends_rebate='"+str(add_parent_balance)+"', update_time='" + str(time.time()) + "' WHERE lnivt_code='" + str(check_user_res[0][17]) + "';")
 
 
                 select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
@@ -866,7 +872,7 @@ class Order:
 
                 cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
 '''
-                cm.ExecNonQuery("UPDATE taojin_order SET status=2 WHERE pdd_order_id='" + str(orderInfo[13]) + "'")
+                cm.InsertM("UPDATE taojin_order SET status=2 WHERE pdd_order_id='" + str(orderInfo[13]) + "'")
                 args = {
                     'wx_bot': bot.self.nick_name,
                     'bot_puid': bot.self.puid,
@@ -912,6 +918,7 @@ class Order:
 回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
                         ''' % (orderInfo[13], add_balance)
+                cm.CommitMysql()
                 cm.Close()
                 parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
 
@@ -938,7 +945,7 @@ class Order:
 
                 up_sql = "UPDATE taojin_user_info SET pdd_rebate_amount='" + str(pdd) + "', withdrawals_amount='" + str(withdrawals_amount) + "', save_money='" + str(save_money) + "', total_rebate_amount='" + str(total_rebate_amount) + "', update_time='" + str(time.time()) + "', order_quantity='"+str(total_order_num)+"', jd_order_quantity='"+str(pdd_order_num)+"' WHERE puid='" + puid + "' AND bot_puid='"+ bot.self.puid+"';"
 
-                cm.ExecNonQuery(up_sql)
+                cm.InsertM(up_sql)
 
                 select_order_num = "SELECT * FROM taojin_order WHERE puid='"+puid+"' AND bot_puid='"+bot.self.puid+"'"
                 # 订单已完成，修改备注
@@ -952,7 +959,7 @@ class Order:
                     u2 = "UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'"
                     cm.ExecNonQuery(u2)
                 '''
-                cm.ExecNonQuery("UPDATE taojin_order SET status=2 WHERE pdd_order_id='"+str(orderInfo[13])+"'")
+                cm.InsertM("UPDATE taojin_order SET status=2 WHERE pdd_order_id='"+str(orderInfo[13])+"'")
 
                 # 累计订单数量
                 '''order_nums = cm.ExecQuery(select_order_num)
@@ -986,9 +993,11 @@ class Order:
 回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
                             ''' % (orderInfo[13], add_balance)
+                cm.CommitMysql()
                 cm.Close()
                 this_user.send(user_text)
         except Exception as e:
+            cm.Rollback()
             trace = traceback.format_exc()
             self.logger.warning("error:{},trace:{}".format(str(e), trace))
             return {'info': 'feild'}

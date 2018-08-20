@@ -65,6 +65,18 @@ class ConnectMysql:
         else:
             return flag
 
+    # 执行非查询类语句, 事务版
+    def InsertM(self, sql):
+        flag = False
+        try:
+            self._cur.execute(sql)
+            flag = True
+        except Exception as err:
+            flag = False
+            print("执行失败, %s" % err)
+        else:
+            return flag
+
     # 获取连接信息
     def GetConnectInfo(self):
         print("连接信息：")
@@ -75,11 +87,9 @@ class ConnectMysql:
         try:
             sql = "INSERT INTO taojin_rebate_log(wx_bot, bot_puid, username, rebate_amount, type, create_time, puid) VALUES('"+str(args['wx_bot'])+"', '"+ args['bot_puid'] +"', '"+str(args['username'])+"','"+str(args['rebate_amount'])+"','"+str(args['type'])+"','"+str(args['create_time'])+"', '"+ args['puid'] +"')"
             self._cur.execute(sql)
-            self._conn.commit()
             flag = True
         except Exception as err:
             flag = False
-            self._conn.rollback()
             print("执行失败, %s" % err)
         else:
             return flag
@@ -94,3 +104,9 @@ class ConnectMysql:
                     self._conn.close()
             except:
                 raise ("关闭异常, %s,%s" % (type(self._cur), type(self._conn)))
+
+    def CommitMysql(self):
+        self._conn.commit()
+
+    def Rollback(self):
+        self._conn.rollback()

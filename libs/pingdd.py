@@ -22,7 +22,6 @@ class Pdd:
         self.config.read('config.conf',encoding="utf-8-sig")
         self.start_keep_cookie_thread()
 
-    # 启动一个线程，定时访问京拼多多，防止cookie失效
     def start_keep_cookie_thread(self):
         t = Thread(target=self.visit_main_url, args=())
         t.setDaemon(True)
@@ -265,6 +264,8 @@ class Pdd:
                 cm.ExecNonQuery(insert_sql)
 
                 return text
+            cm.CommitMysql()
+            cm.Close()
         except Exception as e:
             trace = traceback.format_exc()
             print("error:{},trace:{}".format(str(e), trace))
@@ -294,7 +295,6 @@ class Pdd:
 
             firefoxOptions.set_headless()
 
-            # 开启driver
             wd = webdriver.Firefox(firefox_options=firefoxOptions)
         else:
             wd = webdriver.Firefox()
@@ -441,4 +441,7 @@ class Pdd:
 订单【%s】提交成功，请耐心等待订单结算
 结算成功后机器人将自动返利到您个人账户
         ''' % (order_id2)
+
+        cm.CommitMysql()
+        cm.Close()
         return send_text

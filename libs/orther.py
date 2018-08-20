@@ -37,7 +37,6 @@ class Orther(object):
         if is_ext != ():
             return
 
-        print()
         # 判断是否有邀请人
         if lnivt_code == 0:
             # 没有邀请人，插入新用户
@@ -114,6 +113,7 @@ class Orther(object):
     您将永久获得该好友购物返利百分之10的提成
             '''
 
+            cm.CommitMysql()
             cm.Close()
             # 给邀请人发消息
             lnivt_user = bot.core.search_friends(userName=lnivt_2_info[0]['UserName'])

@@ -350,37 +350,6 @@ class Alimama:
                     '''
             return info
 
-    def get_order(self, msg, orderId, userInfo, puid):
-
-        timestr = str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        order_id = int(orderId)
-
-        cm = ConnectMysql()
-
-        check_order_sql = "SELECT * FROM taojin_order WHERE order_id='" + str(order_id) + "' AND bot_puid = '" + self.bot2.self.puid+ "';"
-        check_order_res = cm.ExecQuery(check_order_sql)
-
-        # 判断该订单是否已经提现
-        if len(check_order_res) >= 1:
-            cm.Close()
-            sendtext ='''
-一一一一 订单消息 一一一一
-
-订单【%s】提交成功，请勿重复提交
-            ''' % (msg['Text'])
-            return sendtext
-
-        cm.ExecNonQuery("INSERT INTO taojin_order(wx_bot, username, order_id, completion_time, order_source, puid, bot_puid, status) VALUES('"+ self.bot2.self.nick_name +"', '"+str(userInfo['NickName'])+"', '"+str(order_id)+"', '" + str(timestr) + "', '1', '"+ puid +"', '"+ self.bot2.self.puid +"', '1')")
-
-        send_text ='''
-一一一一 订单消息 一一一一
-
-订单【%s】提交成功，请耐心等待订单结算
-结算成功后机器人将自动返利到您个人账户
-
-        ''' % (order_id)
-        return send_text
-
     def order(self, orderId, msg):
         """
         用户发送过来订单号，查询订单是否完成，完成并返利
@@ -480,14 +449,14 @@ class Alimama:
                         # 邀请人总钱数加上返利金额
                         withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_parent_balance), 2)
 
-                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                        cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(
                             withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
                             taobao_rebate_amount) + "', total_rebate_amount='" + str(
                             total_rebate_amount) + "', order_quantity='" + str(
                             total_order_num) + "', taobao_order_quantity='" + str(
                             taobao_order_num) + "', update_time='" + str(
                             time.time()) + "' WHERE puid='" + msg.sender.puid + "' AND bot_puid='" + self.bot2.self.puid + "';")
-                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                        cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(
                             withdrawals_amount2) + "', friends_rebate='" + str(friends_rebatr) + "', update_time='" + str(
                             time.time()) + "' WHERE lnivt_code='" + str(
                             check_user_res[0][17]) + "' AND bot_puid='" + self.bot2.self.puid + "';")
@@ -498,10 +467,10 @@ class Alimama:
                                         + item[
                                             'create_time'] + "', '2', '" + msg.sender.puid + "', '" + self.bot2.self.puid + "', '" + str(
                             item['alipay_total_price']) + "', '" + str(
-                            item['total_commission_rate']) + "' , '" + fx + "')"
+                            item['total_commission_rate']) + "' , '" + str(fx) + "')"
 
                         # 把订单插入数据库
-                        cm.ExecNonQuery(insert_to_sql)
+                        cm.InsertM(insert_to_sql)
 
                         # select_order_num = "SELECT * FROM taojin_order WHERE puid='" + puid + "' AND bot_puid='" + self.bot.self.puid + "'"
                         # 订单已完成，修改备注
@@ -568,9 +537,11 @@ class Alimama:
 回复【提现】可申请账户余额提现
                                     ''' % (orderId, add_balance)
 
+                        # 提交事务，并关闭数据库连接
+                        cm.CommitMysql()
                         cm.Close()
 
-                        parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
+                        parent_user = self.bot2.friends().search(nick_name=get_parent_info[0][4])[0]
 
                         parent_user.send(parent_user_text)
                         return user_text
@@ -589,7 +560,7 @@ class Alimama:
                         total_order_num = int(check_user_res[0][11]) + 1
                         taobao_order_num = int(check_user_res[0][13]) + 1
 
-                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                        cm.InsertM("UPDATE taojin_user_info SET withdrawals_amount='" + str(
                             withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
                             taobao_rebate_amount) + "', total_rebate_amount='" + str(
                             total_rebate_amount) + "', order_quantity='" + str(
@@ -602,7 +573,7 @@ class Alimama:
                         + item['create_time'] + "', '2', '" + msg.sender.puid + "', '" + self.bot2.self.puid + "', '" + str(item['alipay_total_price']) + "', '" + str(item['total_commission_rate']) + "' , '" + str(fx) + "')"
 
                         # 把订单插入数据库
-                        cm.ExecNonQuery(insert_to_sql)
+                        cm.InsertM(insert_to_sql)
 
 
                         # select_order_num = "SELECT * FROM taojin_order WHERE puid='" + puid + "' AND bot_puid='" + self.bot.self.puid + "'"
@@ -650,10 +621,12 @@ class Alimama:
 回复【个人信息】可查询账户详情
 回复【提现】可申请账户余额提现
                                                 ''' % (orderId, add_balance)
+                        cm.CommitMysql()
                         cm.Close()
 
                         return user_text
                 except Exception as e:
+                    cm.Rollback()
                     trace = traceback.format_exc()
                     self.logger.warning("error:{},trace:{}".format(str(e), trace))
                     text_to_admin = '''
