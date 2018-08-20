@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-import re, datetime
+import re, datetime, time
 import json
 import configparser
 import random
@@ -12,7 +12,7 @@ from libs.mysql import ConnectMysql
 
 cookie_fname = 'cookies_taobao.txt'
 config = configparser.ConfigParser()
-config.read('config.conf',encoding="utf-8-sig")
+config.read('config.conf', encoding="utf-8-sig")
 
 class Alimama:
     def __init__(self, logger, bot):
@@ -51,11 +51,12 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
-            url3 = 'http://api.hitui.net/privilege?type=2&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
+            url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
 
             # 获取优惠券链接
             datares = self.se.get(url3)
             coupon_link = json.loads(datares.text)
+            print(coupon_link)
             #print(coupon_link)
             # 如果接口返回错误信息
             if 'error_response' in coupon_link:
@@ -210,7 +211,7 @@ class Alimama:
             else:
                 potten = resj['url'].split('https://a.m.taobao.com/i')
                 id = potten[1].split('.htm')[0]
-            url3 = 'http://api.hitui.net/privilege?type=2&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (
+            url3 = 'http://api.hitui.net/privilege?type=1&appkey=JoB3RIns&id=%s&pid=%s&session=%s' % (
             id, config.get('SYS', 'PID'), config.get('SYS', 'SESSION'))
             # print(url3)
             # 获取优惠券链接
@@ -379,3 +380,293 @@ class Alimama:
 
         ''' % (order_id)
         return send_text
+
+    def order(self, orderId, msg):
+        """
+        用户发送过来订单号，查询订单是否完成，完成并返利
+        :param orderId:
+        :return:
+        """
+        # 获取十分钟之前的订单
+        m10 = (datetime.datetime.now()-datetime.timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M:%S")
+
+        get_order_url = 'http://api.hitui.net/tbk_order?appkey=JoB3RIns&start_time={m}&span=600&session={session}&tk_status=12'\
+        .format(m=m10, session=config.get('SYS', 'session'))
+
+        print('get_order_url', get_order_url)
+
+        response = self.se.get(get_order_url)
+        print(response.text)
+        adminuser = self.bot2.friends().search(config.get('ADMIN', 'ADMIN_USER'))[0]
+        if 'error_response' in response.text:
+            text_to_user = '''
+一一一一返利信息一一一一
+
+返利失败，可能原因：
+
+1,订单错误请检查重新发送
+2,当前订单已经失效或取消
+3,当前订单并非本渠道购买
+            '''
+
+            text_to_admin = '''
+一一一一返利信息一一一一
+
+订单返利失败,订单号为{id}
+用户为{user}
+            '''.format(id=orderId, user=msg.sender.nick_name)
+
+            adminuser.send(text_to_admin)
+            return text_to_user
+
+        if str(orderId) not in response.text:
+            to_user = '''
+一一一一返利信息一一一一
+
+返利失败，可能原因：
+
+1,订单错误请检查重新发送
+2,当前订单已经失效或取消
+3,当前订单并非本渠道购买
+            '''
+            return to_user
+
+        data = json.loads(response.text)['tbk_sc_order_get_response']['results']['n_tbk_order']
+
+        for item in data:
+            if int(item['trade_id']) == int(orderId):
+                # 计算返利金额
+                fx = round(float(item['pub_share_pre_fee']) * float(config.get('BN', 'bn3t')), 2)
+                print(fx)
+                fx_pp = round(float(fx) * float(config.get('BN', 'bn4')), 2)
+                try:
+                    cm = ConnectMysql()
+                    # 查询用户是否有上线
+                    check_user_sql = "SELECT * FROM taojin_user_info WHERE puid='" + msg.sender.puid + "' AND bot_puid='" + self.bot2.self.puid + "';"
+                    check_user_res = cm.ExecQuery(check_user_sql)
+                    # 定义SQL语句 查询用户是否已经存在邀请人
+                    # 判断是否已经有邀请人了
+                    if check_user_res and check_user_res[0][17] != '0':
+
+                        # 获取邀请人信息
+                        get_parent_sql = "SELECT * FROM taojin_user_info WHERE lnivt_code='" + str(
+                            check_user_res[0][17]) + "' AND bot_puid='" + self.bot2.self.puid + "';"
+
+                        get_parent_info = cm.ExecQuery(get_parent_sql)
+
+                        # 计算返佣
+                        add_balance = fx
+                        # 累加余额
+                        withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
+                        # 累加淘宝总返利
+                        taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
+                        # 累加总返利
+                        total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
+
+                        jishen = fx
+
+                        # 计算共节省金额,商品原价减去实际支付价格，加上原有节省金额加上返佣
+                        save_money = round(check_user_res[0][10] + jishen + add_balance, 2)
+                        # 总订单数加一
+                        total_order_num = int(check_user_res[0][11]) + 1
+                        # 淘宝订单数加一
+                        taobao_order_num = int(check_user_res[0][13]) + 1
+
+                        # 邀请人返利金额
+                        add_parent_balance = fx_pp
+
+                        # 给邀请人好友返利加上金额
+                        friends_rebatr = round(float(get_parent_info[0][19]) + float(add_parent_balance))
+                        # 邀请人总钱数加上返利金额
+                        withdrawals_amount2 = round(float(get_parent_info[0][9]) + float(add_parent_balance), 2)
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                            withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
+                            taobao_rebate_amount) + "', total_rebate_amount='" + str(
+                            total_rebate_amount) + "', order_quantity='" + str(
+                            total_order_num) + "', taobao_order_quantity='" + str(
+                            taobao_order_num) + "', update_time='" + str(
+                            time.time()) + "' WHERE puid='" + msg.sender.puid + "' AND bot_puid='" + self.bot2.self.puid + "';")
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                            withdrawals_amount2) + "', friends_rebate='" + str(friends_rebatr) + "', update_time='" + str(
+                            time.time()) + "' WHERE lnivt_code='" + str(
+                            check_user_res[0][17]) + "' AND bot_puid='" + self.bot2.self.puid + "';")
+
+                        insert_to_sql = "INSERT INTO taojin_order(wx_bot, username, order_id, status, completion_time, order_source, puid, bot_puid, order_price, total_commission_rate, total_commission_fee) \
+                                                VALUES ('" + self.bot2.self.nick_name + "', '" + msg.sender.nick_name + "', '" + str(
+                            orderId) + "', '2','" \
+                                        + item[
+                                            'create_time'] + "', '2', '" + msg.sender.puid + "', '" + self.bot2.self.puid + "', '" + str(
+                            item['alipay_total_price']) + "', '" + str(
+                            item['total_commission_rate']) + "' , '" + fx + "')"
+
+                        # 把订单插入数据库
+                        cm.ExecNonQuery(insert_to_sql)
+
+                        # select_order_num = "SELECT * FROM taojin_order WHERE puid='" + puid + "' AND bot_puid='" + self.bot.self.puid + "'"
+                        # 订单已完成，修改备注
+                        '''order_num = cm.ExecQuery(select_order_num)
+    
+                            if order_num == ():
+                                split_arr = this_user.remark_name.split('_')
+                                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                                bot.core.set_alias(userName=this_user.user_name, alias=new_remark_name)
+    
+                                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+    
+                            cm.ExecNonQuery("UPDATE taojin_order SET status=2 WHERE order_id='"+str(orderInfo[1])+"'")
+    
+                            # 累计订单数量
+                            order_nums = cm.ExecQuery(select_order_num)
+    
+                            split_arr2 = this_user.remark_name.split('_')
+    
+                            new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+    
+                            bot.core.set_alias(userName=this_user.user_name, alias=new_remark_name2)
+    
+                            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+                            '''
+                        args = {
+                            'wx_bot': self.bot2.self.nick_name,
+                            'bot_puid': self.bot2.self.puid,
+                            'username': check_user_res[0][4],
+                            'puid': msg.sender.puid,
+                            'rebate_amount': add_balance,
+                            'type': 3,
+                            'create_time': time.time()
+                        }
+
+                        # 写入返利日志
+                        cm.InsertRebateLog(args)
+                        parent_puid = get_parent_info[0][2]
+                        args2 = {
+                            'wx_bot': self.bot2.self.nick_name,
+                            'bot_puid': self.bot2.self.puid,
+                            'username': get_parent_info[0][4],
+                            'puid': parent_puid,
+                            'rebate_amount': add_parent_balance,
+                            'type': 4,
+                            'create_time': time.time()
+                        }
+                        # 写入返利日志
+                        cm.InsertRebateLog(args2)
+                        parent_user_text = '''
+一一一一  推广信息 一一一一
+
+好友【%s】又完成一笔订单
+返利提成%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+                                    ''' % (check_user_res[0][4], add_parent_balance)
+
+                        user_text = '''
+一一一一系统消息一一一一
+
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
+                                    ''' % (orderId, add_balance)
+
+                        cm.Close()
+
+                        parent_user = self.bot.friends().search(nick_name=get_parent_info[0][4])[0]
+
+                        parent_user.send(parent_user_text)
+                        return user_text
+                    else:
+                        add_balance = fx
+                        withdrawals_amount = round(float(check_user_res[0][9]) + add_balance, 2)
+                        taobao_rebate_amount = round(float(check_user_res[0][8]) + add_balance, 2)
+                        total_rebate_amount = round(float(check_user_res[0][6]) + add_balance, 2)
+
+                        jishen = add_balance
+
+                        if jishen < 0:
+                            jishen = 0
+
+                        save_money = round(check_user_res[0][10] + jishen + add_balance, 2)
+                        total_order_num = int(check_user_res[0][11]) + 1
+                        taobao_order_num = int(check_user_res[0][13]) + 1
+
+                        cm.ExecNonQuery("UPDATE taojin_user_info SET withdrawals_amount='" + str(
+                            withdrawals_amount) + "', save_money='" + str(save_money) + "', taobao_rebate_amount='" + str(
+                            taobao_rebate_amount) + "', total_rebate_amount='" + str(
+                            total_rebate_amount) + "', order_quantity='" + str(
+                            total_order_num) + "', taobao_order_quantity='" + str(
+                            taobao_order_num) + "', update_time='" + str(
+                            time.time()) + "' WHERE puid='" + msg.sender.puid + "' AND bot_puid='" + self.bot2.self.puid + "';")
+
+                        insert_to_sql = "INSERT INTO taojin_order(wx_bot, username, order_id, status, completion_time, order_source, puid, bot_puid, order_price, total_commission_rate, total_commission_fee) \
+                        VALUES ('" + self.bot2.self.nick_name + "', '" + msg.sender.nick_name + "', '" + str(orderId) + "', '2','" \
+                        + item['create_time'] + "', '2', '" + msg.sender.puid + "', '" + self.bot2.self.puid + "', '" + str(item['alipay_total_price']) + "', '" + str(item['total_commission_rate']) + "' , '" + str(fx) + "')"
+
+                        # 把订单插入数据库
+                        cm.ExecNonQuery(insert_to_sql)
+
+
+                        # select_order_num = "SELECT * FROM taojin_order WHERE puid='" + puid + "' AND bot_puid='" + self.bot.self.puid + "'"
+                        # 订单已完成，修改备注
+                        '''order_num = cm.ExecQuery(select_order_num)
+    
+                            if order_num == ():
+                                split_arr = this_user.remark_name.split('_')
+                                new_remark_name = '%s%s%s%s%s%s%s' % (split_arr[0], '_', split_arr[1], '_', 'C', '_', split_arr[3])
+                                self.logger.debug(new_remark_name)
+                                bot.core.set_alias(userName=this_user.user_name, alias=new_remark_name)
+    
+                                cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")
+    
+                            cm.ExecNonQuery("UPDATE taojin_order SET status=2 WHERE order_id='"+str(orderInfo[1])+"'")
+    
+                            # 累计订单数量
+                            order_nums = cm.ExecQuery(select_order_num)
+    
+                            split_arr2 = this_user.remark_name.split('_')
+    
+                            new_remark_name2 = '%s%s%s%s%s%s%s' % (split_arr2[0], '_', split_arr2[1], '_', split_arr2[2], '_', len(order_nums))
+    
+                            bot.core.set_alias(userName=this_user.user_name, alias=new_remark_name2)
+    
+                            cm.ExecNonQuery("UPDATE taojin_user_info SET remarkname = '"+new_remark_name2+"' WHERE puid='" + puid + "' AND bot_puid='" + bot.self.puid + "'")'''
+
+                        args = {
+                            'wx_bot': self.bot2.self.nick_name,
+                            'bot_puid': self.bot2.self.puid,
+                            'username': check_user_res[0][4],
+                            'puid': msg.sender.puid,
+                            'rebate_amount': add_balance,
+                            'type': 3,
+                            'create_time': time.time()
+                        }
+                        # 写入返利日志
+                        cm.InsertRebateLog(args)
+
+                        user_text = '''
+一一一一系统消息一一一一
+
+订单【%s】返利成功
+返利金%s元已发放到个人账户
+回复【个人信息】可查询账户详情
+回复【提现】可申请账户余额提现
+                                                ''' % (orderId, add_balance)
+                        cm.Close()
+
+                        return user_text
+                except Exception as e:
+                    trace = traceback.format_exc()
+                    self.logger.warning("error:{},trace:{}".format(str(e), trace))
+                    text_to_admin = '''
+一一一一返利信息一一一一
+
+订单返利失败,订单号为{id}
+用户为{user}
+                                '''.format(id=orderId, user=msg.sender.nick_name)
+
+                    adminuser.send(text_to_admin)
+                    t = '''
+一一一一一 订单信息 一一一一一
+订单返利失败，以联系管理员
+请等待处理！
+                    '''
+                    return t
